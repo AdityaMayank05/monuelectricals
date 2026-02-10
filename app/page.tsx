@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 const brandLogos = [
   { name: "Havells", src: "/assets/logos/havells-logo.svg" },
@@ -26,12 +27,12 @@ const rotatingProducts = [
 ];
 
 const categories = [
-  { name: "CEILING FANS", count: "28+", image: "/assets/category-cover/fan-cover.png" },
-  { name: "VENTILATION", count: "12+", image: "/assets/category-cover/haveels-venti.png" },
-  { name: "SWITCHGEAR", count: "50+", image: "/assets/category-cover/switch-cover.png" },
-  { name: "CHIMNEYS", count: "8+", image: "/assets/category-cover/sakash-automatic-chimney.png" },
-  { name: "WIRES", count: "20+", image: "/assets/category-cover/havells-wire.png" },
-  { name: "LIGHTING", count: "35+", image: "/assets/category-cover/celing-light.png" },
+  { name: "CEILING FANS", count: "28+", image: "/assets/category-cover/fan-cover.png", slug: "ceiling-fans" },
+  { name: "VENTILATION", count: "12+", image: "/assets/category-cover/haveels-venti.png", slug: "ventilation" },
+  { name: "SWITCHGEAR", count: "50+", image: "/assets/category-cover/switch-cover.png", slug: "switchgear" },
+  { name: "CHIMNEYS", count: "8+", image: "/assets/category-cover/sakash-automatic-chimney.png", slug: "chimneys" },
+  { name: "WIRES", count: "20+", image: "/assets/category-cover/havells-wire.png", slug: "wires" },
+  { name: "LIGHTING", count: "35+", image: "/assets/category-cover/celing-light.png", slug: "lighting" },
 ];
 
 const reviews = [
@@ -240,9 +241,10 @@ export default function HomePage() {
 
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
             {categories.map((cat, i) => (
-              <div
+              <Link
                 key={i}
-                className="scroll-animate from-bottom group cursor-pointer"
+                href={`/products/${cat.slug}`}
+                className="scroll-animate from-bottom group cursor-pointer block"
                 style={{ animationDelay: `${i * 80}ms` }}
               >
                 <div className="relative h-56 md:h-72 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(245,158,11,0.12)] hover:border-amber-500/40">
@@ -268,7 +270,7 @@ export default function HomePage() {
                   {/* Hover accent line */}
                   <div className="absolute bottom-0 left-0 h-[3px] w-0 bg-amber-500 group-hover:w-full transition-all duration-500"></div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>

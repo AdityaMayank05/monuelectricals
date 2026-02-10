@@ -40,7 +40,7 @@ const reviews = [
   { name: "AMIT P.", rating: 5, text: "Quick delivery and great after-sales support. Highly recommended!" },
 ];
 
-export default function Page5() {
+export default function HomePage() {
   const observerRef = useRef<IntersectionObserver | null>(null);
   const [activeProductIndex, setActiveProductIndex] = useState(0);
 
@@ -69,160 +69,140 @@ export default function Page5() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
-      {/* Hero - Stacked Sections with Rotating Display */}
-      <section className="min-h-screen flex flex-col">
-        {/* Top Bar */}
-        <header className="flex justify-between items-center px-6 md:px-12 lg:px-20 py-6 bg-white border-b border-gray-100">
-          <div className="flex items-center gap-6">
-            <span className="text-2xl font-black tracking-tighter">
-              POWER<span className="text-red-500">.</span>ZONE
+    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+      {/* Hero Section */}
+      <section className="min-h-screen relative overflow-hidden">
+        {/* Gradient Mesh Background */}
+        <div className="absolute inset-0">
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-amber-500/20 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-orange-600/10 rounded-full blur-3xl"></div>
+        </div>
+        
+        {/* Grid Pattern */}
+        <div className="absolute inset-0 opacity-10" style={{
+          backgroundImage: `linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)`,
+          backgroundSize: '60px 60px'
+        }}></div>
+
+        {/* Header */}
+        <header className="relative z-10 flex justify-between items-center px-6 md:px-12 lg:px-20 py-6">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-amber-500 flex items-center justify-center">
+              <span className="text-zinc-950 font-black text-lg">P</span>
+            </div>
+            <span className="text-xl font-black tracking-tighter">
+              POWER<span className="text-amber-500">ZONE</span>
             </span>
           </div>
           <div className="flex items-center gap-6">
-            <span className="text-sm text-gray-400 hidden md:block">Since 2005</span>
-            <a href="#contact" className="bg-gray-900 text-white px-5 py-2.5 text-sm font-bold hover:bg-red-500 transition-colors cursor-pointer">
-              CONTACT
+            <span className="text-xs text-zinc-500 tracking-widest hidden md:block">EST. 2005</span>
+            <a href="#contact" className="border border-amber-500 text-amber-500 px-5 py-2.5 text-sm font-bold hover:bg-amber-500 hover:text-zinc-950 transition-all duration-200 cursor-pointer">
+              CONTACT US
             </a>
           </div>
         </header>
 
-        {/* Main Hero Content */}
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 min-h-[calc(100vh-80px)]">
-          {/* Left - Text Content */}
-          <div className="lg:col-span-5 flex flex-col justify-center px-6 md:px-12 lg:px-20 py-16 bg-white">
-            <div className="max-w-lg">
-              <div className="flex items-center gap-3 mb-8">
-                <div className="h-px w-12 bg-red-500"></div>
-                <span className="text-xs font-bold tracking-widest text-red-500">ELECTRICAL SUPERSTORE</span>
-              </div>
+        {/* Main Hero Grid */}
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 min-h-[calc(100vh-100px)] px-6 md:px-12 lg:px-20">
+          {/* Left - Rotating Clock */}
+          <div className="flex items-center justify-center py-12 order-2 lg:order-1">
+            <div className="relative w-[300px] h-[300px] md:w-[400px] md:h-[400px]">
+              {/* Outer rings */}
+              <div className="absolute inset-0 rounded-full border border-zinc-800"></div>
+              <div className="absolute inset-6 rounded-full border border-zinc-800/50"></div>
+              <div className="absolute inset-12 rounded-full border border-dashed border-amber-500/30"></div>
               
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-black leading-[0.9] tracking-tighter">
-                Premium
-                <span className="block">Electricals</span>
-                <span className="block text-gray-300">Since 2005</span>
-              </h1>
+              {/* Rotating thumbnails */}
+              <div 
+                className="absolute inset-0 transition-transform duration-1000 ease-out"
+                style={{ transform: `rotate(-${activeProductIndex * 45}deg)` }}
+              >
+                {rotatingProducts.map((product, i) => {
+                  const angle = i * 45;
+                  return (
+                    <div
+                      key={i}
+                      className="absolute left-1/2 top-1/2"
+                      style={{ transform: `rotate(${angle}deg) translateY(-130px)` }}
+                    >
+                      <div 
+                        className={`w-12 h-12 md:w-16 md:h-16 rounded-full bg-zinc-900 border-2 flex items-center justify-center p-2 -ml-6 -mt-6 md:-ml-8 md:-mt-8 transition-all duration-500 ${
+                          i === activeProductIndex ? 'border-amber-500 scale-110 bg-zinc-800' : 'border-zinc-700'
+                        }`}
+                        style={{ transform: `rotate(${activeProductIndex * 45}deg)` }}
+                      >
+                        <Image src={product.image} alt={product.name} width={40} height={40} className="object-contain" />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
 
-              <p className="text-gray-500 mt-8 text-lg leading-relaxed max-w-md">
-                Quality products from world-renowned brands. Two decades of trust and service excellence.
-              </p>
-
-              {/* Stats Row */}
-              <div className="flex gap-10 mt-12">
-                <div>
-                  <span className="text-4xl font-black">500<span className="text-red-500">+</span></span>
-                  <p className="text-xs text-gray-400 mt-1 uppercase tracking-wider">Products</p>
-                </div>
-                <div>
-                  <span className="text-4xl font-black">20</span>
-                  <p className="text-xs text-gray-400 mt-1 uppercase tracking-wider">Years</p>
-                </div>
-                <div>
-                  <span className="text-4xl font-black">2</span>
-                  <p className="text-xs text-gray-400 mt-1 uppercase tracking-wider">Stores</p>
+              {/* Center Display */}
+              <div className="absolute inset-20 md:inset-24 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center">
+                <div className="text-center p-4">
+                  <div className="relative w-24 h-24 md:w-32 md:h-32 mx-auto">
+                    {rotatingProducts.map((product, i) => (
+                      <div
+                        key={i}
+                        className={`absolute inset-0 transition-all duration-500 ${
+                          i === activeProductIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
+                        }`}
+                      >
+                        <Image src={product.image} alt={product.name} fill className="object-contain" />
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-amber-500 font-bold tracking-wider mt-2">{rotatingProducts[activeProductIndex].category}</p>
+                  <p className="font-black text-sm text-zinc-300 mt-1">{rotatingProducts[activeProductIndex].name}</p>
                 </div>
               </div>
 
-              {/* Store Locations */}
-              <div className="flex gap-6 mt-12">
-                <div className="flex items-start gap-3">
-                  <div className="w-1 h-12 bg-red-500"></div>
-                  <div>
-                    <p className="text-xs text-gray-400 uppercase">Store 01</p>
-                    <p className="font-bold">Main Market</p>
-                    <p className="text-sm text-gray-400">+91 98765 43210</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-1 h-12 bg-gray-200"></div>
-                  <div>
-                    <p className="text-xs text-gray-400 uppercase">Store 02</p>
-                    <p className="font-bold">City Center</p>
-                    <p className="text-sm text-gray-400">+91 98765 43211</p>
-                  </div>
-                </div>
+              {/* Progress indicator */}
+              <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 flex gap-1.5">
+                {rotatingProducts.map((_, i) => (
+                  <div 
+                    key={i} 
+                    className={`h-1 transition-all duration-300 ${
+                      i === activeProductIndex ? 'w-6 bg-amber-500' : 'w-1.5 bg-zinc-700'
+                    }`}
+                  ></div>
+                ))}
               </div>
             </div>
           </div>
 
-          {/* Right - Product Display with Clock Animation */}
-          <div className="lg:col-span-7 bg-gray-100 relative overflow-hidden">
-            {/* Background Pattern */}
-            <div className="absolute inset-0 opacity-30" style={{
-              backgroundImage: `radial-gradient(circle at 2px 2px, #d1d5db 1px, transparent 0)`,
-              backgroundSize: '40px 40px'
-            }}></div>
+          {/* Right - Text Content */}
+          <div className="flex flex-col justify-center py-16 order-1 lg:order-2">
+            <div className="max-w-lg">
+              <div className="inline-flex items-center gap-2 bg-zinc-900 border border-zinc-800 px-4 py-2 mb-8">
+                <div className="w-2 h-2 bg-amber-500 animate-pulse"></div>
+                <span className="text-xs font-bold tracking-widest text-zinc-400">ELECTRICAL SUPERSTORE</span>
+              </div>
+              
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-black leading-[0.9] tracking-tighter">
+                <span className="text-amber-500">PREMIUM</span>
+                <span className="block text-zinc-100">ELECTRICALS</span>
+                <span className="block text-zinc-600">FOR YOUR HOME</span>
+              </h1>
 
-            {/* Rotating Clock Display */}
-            <div className="relative h-full flex items-center justify-center py-12">
-              <div className="relative w-[320px] h-[320px] md:w-[450px] md:h-[450px]">
-                {/* Clock rings */}
-                <div className="absolute inset-0 rounded-full border-2 border-gray-200"></div>
-                <div className="absolute inset-8 rounded-full border border-gray-200"></div>
-                <div className="absolute inset-16 rounded-full border border-dashed border-red-200"></div>
+              <p className="text-zinc-500 mt-8 text-lg leading-relaxed max-w-md">
+                Two decades of excellence. Quality products from world-renowned brands at competitive prices.
+              </p>
 
-                {/* Rotating product thumbnails */}
-                <div 
-                  className="absolute inset-0 transition-transform duration-1000 ease-out"
-                  style={{ transform: `rotate(-${activeProductIndex * 45}deg)` }}
-                >
-                  {rotatingProducts.map((product, i) => {
-                    const angle = i * 45;
-                    return (
-                      <div
-                        key={i}
-                        className="absolute left-1/2 top-1/2"
-                        style={{ transform: `rotate(${angle}deg) translateY(-145px)` }}
-                      >
-                        <div 
-                          className={`w-12 h-12 md:w-14 md:h-14 rounded-full bg-white shadow-md border-2 flex items-center justify-center p-1.5 -ml-6 -mt-6 md:-ml-7 md:-mt-7 transition-all duration-500 ${
-                            i === activeProductIndex ? 'border-red-500 scale-125 shadow-red-100 shadow-lg' : 'border-gray-100'
-                          }`}
-                          style={{ transform: `rotate(${activeProductIndex * 45}deg)` }}
-                        >
-                          <Image src={product.image} alt={product.name} width={36} height={36} className="object-contain" />
-                        </div>
-                      </div>
-                    );
-                  })}
+              {/* Stats */}
+              <div className="grid grid-cols-3 gap-6 mt-12 pt-8 border-t border-zinc-800">
+                <div>
+                  <span className="text-4xl font-black text-amber-500">500+</span>
+                  <p className="text-xs text-zinc-500 mt-1 uppercase tracking-wider">Products</p>
                 </div>
-
-                {/* Center active product */}
-                <div className="absolute inset-24 md:inset-28 rounded-full bg-white shadow-xl flex items-center justify-center">
-                  <div className="text-center p-4">
-                    <div className="relative w-28 h-28 md:w-36 md:h-36 mx-auto">
-                      {rotatingProducts.map((product, i) => (
-                        <div
-                          key={i}
-                          className={`absolute inset-0 transition-all duration-500 ${
-                            i === activeProductIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
-                          }`}
-                        >
-                          <Image src={product.image} alt={product.name} fill className="object-contain" />
-                        </div>
-                      ))}
-                    </div>
-                    <div className="mt-3">
-                      <p className="text-xs text-red-500 font-bold tracking-wider">{rotatingProducts[activeProductIndex].category}</p>
-                      <p className="font-black text-sm mt-1">{rotatingProducts[activeProductIndex].name}</p>
-                    </div>
-                  </div>
+                <div>
+                  <span className="text-4xl font-black">20</span>
+                  <p className="text-xs text-zinc-500 mt-1 uppercase tracking-wider">Years</p>
                 </div>
-
-                {/* Progress bar */}
-                <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 flex items-center gap-3">
-                  <span className="text-xs text-gray-400 font-mono">
-                    {String(activeProductIndex + 1).padStart(2, '0')}
-                  </span>
-                  <div className="w-32 h-0.5 bg-gray-200 overflow-hidden rounded-full">
-                    <div 
-                      className="h-full bg-red-500 transition-all duration-300"
-                      style={{ width: `${((activeProductIndex + 1) / rotatingProducts.length) * 100}%` }}
-                    ></div>
-                  </div>
-                  <span className="text-xs text-gray-400 font-mono">
-                    {String(rotatingProducts.length).padStart(2, '0')}
-                  </span>
+                <div>
+                  <span className="text-4xl font-black">2</span>
+                  <p className="text-xs text-zinc-500 mt-1 uppercase tracking-wider">Stores</p>
                 </div>
               </div>
             </div>
@@ -230,15 +210,15 @@ export default function Page5() {
         </div>
       </section>
 
-      {/* Brand Strip */}
-      <section className="py-8 bg-white border-y border-gray-100 overflow-hidden">
+      {/* Brand Strip - Original Colors, No Grayscale */}
+      <section className="py-8 bg-zinc-900 border-y border-zinc-800 overflow-hidden">
         <div className="relative">
-          <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-white to-transparent z-10"></div>
-          <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-white to-transparent z-10"></div>
+          <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-zinc-900 to-transparent z-10"></div>
+          <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-zinc-900 to-transparent z-10"></div>
           <div className="flex animate-scroll-left">
             {[...brandLogos, ...brandLogos, ...brandLogos].map((brand, i) => (
-              <div key={i} className="flex-shrink-0 px-10 flex items-center">
-                <div className="h-10 w-28 flex items-center justify-center grayscale hover:grayscale-0 opacity-40 hover:opacity-100 transition-all cursor-pointer">
+              <div key={i} className="flex-shrink-0 px-8 flex items-center">
+                <div className="h-12 w-32 bg-white rounded-lg flex items-center justify-center px-4 py-2 hover:shadow-lg hover:shadow-amber-500/10 transition-shadow duration-200 cursor-pointer">
                   <Image src={brand.src} alt={brand.name} width={100} height={40} className="h-7 w-auto object-contain" />
                 </div>
               </div>
@@ -247,42 +227,46 @@ export default function Page5() {
         </div>
       </section>
 
-      {/* Categories - Stacked List */}
-      <section className="py-24 px-6 md:px-12 lg:px-20 bg-white">
+      {/* Categories */}
+      <section className="py-24 px-6 md:px-12 lg:px-20 bg-zinc-950">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-16">
             <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="h-px w-12 bg-red-500"></div>
-                <span className="text-xs font-bold tracking-widest text-red-500">BROWSE</span>
-              </div>
-              <h2 className="text-4xl md:text-5xl font-black tracking-tighter">Categories</h2>
+              <span className="text-amber-500 text-xs font-bold tracking-widest">BROWSE</span>
+              <h2 className="text-4xl md:text-5xl font-black tracking-tighter mt-2">CATEGORIES</h2>
             </div>
+            <p className="text-zinc-500 text-sm mt-4 md:mt-0">Explore our complete range</p>
           </div>
 
-          <div className="space-y-2">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
             {categories.map((cat, i) => (
-              <div 
+              <div
                 key={i}
-                className="scroll-animate from-left group cursor-pointer"
-                style={{ animationDelay: `${i * 50}ms` }}
+                className="scroll-animate from-bottom group cursor-pointer"
+                style={{ animationDelay: `${i * 80}ms` }}
               >
-                <div className="flex items-center justify-between p-6 bg-gray-50 group-hover:bg-gray-900 group-hover:text-white transition-colors">
-                  <div className="flex items-center gap-6">
-                    <span className="text-3xl font-black text-gray-200 group-hover:text-gray-700 transition-colors w-12">
-                      {String(i + 1).padStart(2, '0')}
-                    </span>
-                    <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center p-2 group-hover:bg-gray-800 transition-colors">
-                      <Image src={cat.image} alt={cat.name} width={50} height={50} className="object-contain" />
-                    </div>
-                    <div>
-                      <h3 className="font-black text-lg">{cat.name}</h3>
-                      <p className="text-sm text-gray-400">{cat.count} products</p>
-                    </div>
+                <div className="relative h-56 md:h-72 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(245,158,11,0.12)] hover:border-amber-500/40">
+                  {/* Product image - fills card */}
+                  <div className="absolute inset-0 flex items-center justify-center p-8 md:p-10">
+                    <Image
+                      src={cat.image}
+                      alt={cat.name}
+                      width={160}
+                      height={160}
+                      className="object-contain w-full h-full max-w-[140px] md:max-w-[160px] transition-transform duration-300 group-hover:scale-110"
+                    />
                   </div>
-                  <svg className="w-6 h-6 text-gray-300 group-hover:text-red-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                  </svg>
+
+                  {/* Bottom label overlay */}
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-zinc-950 via-zinc-950/90 to-transparent pt-10 pb-5 px-5">
+                    <h3 className="font-black text-base md:text-lg text-zinc-100 group-hover:text-amber-400 transition-colors duration-200">
+                      {cat.name}
+                    </h3>
+                    <p className="text-xs text-zinc-500 mt-0.5">{cat.count} products</p>
+                  </div>
+
+                  {/* Hover accent line */}
+                  <div className="absolute bottom-0 left-0 h-[3px] w-0 bg-amber-500 group-hover:w-full transition-all duration-500"></div>
                 </div>
               </div>
             ))}
@@ -290,20 +274,26 @@ export default function Page5() {
         </div>
       </section>
 
-      {/* Value Props */}
-      <section className="py-24 px-6 md:px-12 lg:px-20 bg-gray-900 text-white">
+      {/* Value Props - Always Visible, Elevate + Glow on Hover */}
+      <section className="py-24 px-6 md:px-12 lg:px-20 bg-zinc-900">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-gray-800">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
-              { num: "01", title: "QUALITY", desc: "Only genuine authorized products" },
-              { num: "02", title: "SUPPORT", desc: "24/7 WhatsApp assistance" },
-              { num: "03", title: "PRICING", desc: "Best competitive prices" },
-              { num: "04", title: "LEGACY", desc: "20 years of trust" },
+              { icon: "✓", title: "QUALITY", desc: "Only genuine authorized products from top brands" },
+              { icon: "◐", title: "24/7 SUPPORT", desc: "WhatsApp assistance anytime you need" },
+              { icon: "◈", title: "BEST PRICES", desc: "Competitive pricing guaranteed" },
+              { icon: "★", title: "20+ YEARS", desc: "Two decades of trust and excellence" },
             ].map((item, i) => (
-              <div key={i} className="scroll-animate from-bottom bg-gray-900 p-8 group" style={{ animationDelay: `${i * 100}ms` }}>
-                <span className="text-5xl font-black text-gray-800 group-hover:text-red-500/30 transition-colors">{item.num}</span>
-                <h3 className="font-black text-lg mt-6 group-hover:text-red-500 transition-colors">{item.title}</h3>
-                <p className="text-gray-500 text-sm mt-2">{item.desc}</p>
+              <div 
+                key={i} 
+                className="scroll-animate from-bottom text-center bg-zinc-800/50 border border-zinc-700/50 rounded-lg p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_0_25px_rgba(245,158,11,0.15)] hover:border-amber-500/40 cursor-pointer"
+                style={{ animationDelay: `${i * 100}ms` }}
+              >
+                <div className="w-16 h-16 mx-auto bg-zinc-800 border border-zinc-700 flex items-center justify-center text-2xl text-amber-500 mb-4 rounded-lg">
+                  {item.icon}
+                </div>
+                <h3 className="font-black text-lg text-zinc-100">{item.title}</h3>
+                <p className="text-zinc-400 text-sm mt-2">{item.desc}</p>
               </div>
             ))}
           </div>
@@ -311,26 +301,20 @@ export default function Page5() {
       </section>
 
       {/* Reviews */}
-      <section id="contact" className="py-24 px-6 md:px-12 lg:px-20 bg-gray-50">
+      <section id="contact" className="py-24 px-6 md:px-12 lg:px-20 bg-zinc-950">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-16">
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="h-px w-12 bg-red-500"></div>
-                <span className="text-xs font-bold tracking-widest text-red-500">TESTIMONIALS</span>
-              </div>
-              <h2 className="text-4xl md:text-5xl font-black tracking-tighter">Reviews</h2>
-            </div>
-            <p className="text-gray-400 text-sm mt-4 md:mt-0">From Google Reviews</p>
+          <div className="text-center mb-16">
+            <span className="text-amber-500 text-xs font-bold tracking-widest">TESTIMONIALS</span>
+            <h2 className="text-4xl md:text-5xl font-black tracking-tighter mt-2">CUSTOMER REVIEWS</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {reviews.map((review, i) => (
-              <div key={i} className="scroll-animate from-bottom bg-white p-8 border-l-4 border-red-500" style={{ animationDelay: `${i * 100}ms` }}>
-                <div className="text-red-500 text-lg mb-4">{"★".repeat(review.rating)}</div>
-                <p className="text-gray-600 mb-6">&quot;{review.text}&quot;</p>
+              <div key={i} className="scroll-animate from-bottom bg-zinc-900 border border-zinc-800 p-8" style={{ animationDelay: `${i * 100}ms` }}>
+                <div className="text-amber-500 text-lg mb-4">{"★".repeat(review.rating)}</div>
+                <p className="text-zinc-400 mb-6">&quot;{review.text}&quot;</p>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gray-900 text-white flex items-center justify-center font-black">
+                  <div className="w-10 h-10 bg-amber-500 text-zinc-950 flex items-center justify-center font-black">
                     {review.name[0]}
                   </div>
                   <span className="font-black text-sm">{review.name}</span>
@@ -342,33 +326,38 @@ export default function Page5() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-16 px-6 md:px-12 lg:px-20">
+      <footer className="bg-zinc-900 border-t border-zinc-800 py-16 px-6 md:px-12 lg:px-20">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
           <div className="md:col-span-2">
-            <span className="text-3xl font-black tracking-tighter">
-              POWER<span className="text-red-500">.</span>ZONE
-            </span>
-            <p className="text-gray-500 mt-4 max-w-md">Premium electrical products since 2005.</p>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-amber-500 flex items-center justify-center">
+                <span className="text-zinc-950 font-black text-lg">P</span>
+              </div>
+              <span className="text-xl font-black tracking-tighter">
+                POWER<span className="text-amber-500">ZONE</span>
+              </span>
+            </div>
+            <p className="text-zinc-500 mt-4">Premium electrical products since 2005.</p>
             <div className="flex gap-3 mt-6">
               {["FB", "IG", "WA"].map((s) => (
-                <a key={s} href="#" className="w-10 h-10 border border-gray-700 flex items-center justify-center text-gray-500 hover:text-white hover:border-red-500 transition-colors cursor-pointer text-xs font-bold">
+                <a key={s} href="#" className="w-10 h-10 border border-zinc-700 flex items-center justify-center text-zinc-500 hover:text-amber-500 hover:border-amber-500 transition-colors duration-200 cursor-pointer text-xs font-bold">
                   {s}
                 </a>
               ))}
             </div>
           </div>
           <div>
-            <h4 className="font-black text-red-500 mb-4 text-sm">STORE 01</h4>
-            <p className="text-gray-500 text-sm">123 Main Market Road</p>
-            <p className="text-gray-500 text-sm">+91 98765 43210</p>
+            <h4 className="font-black text-amber-500 mb-4 text-sm">STORE 01</h4>
+            <p className="text-zinc-500 text-sm">123 Main Market Road</p>
+            <p className="text-zinc-500 text-sm">+91 98765 43210</p>
           </div>
           <div>
-            <h4 className="font-black text-red-500 mb-4 text-sm">STORE 02</h4>
-            <p className="text-gray-500 text-sm">456 City Center Plaza</p>
-            <p className="text-gray-500 text-sm">+91 98765 43211</p>
+            <h4 className="font-black text-amber-500 mb-4 text-sm">STORE 02</h4>
+            <p className="text-zinc-500 text-sm">456 City Center Plaza</p>
+            <p className="text-zinc-500 text-sm">+91 98765 43211</p>
           </div>
         </div>
-        <div className="max-w-7xl mx-auto mt-12 pt-8 border-t border-gray-800 text-center text-gray-600 text-sm">
+        <div className="max-w-7xl mx-auto mt-12 pt-8 border-t border-zinc-800 text-center text-zinc-600 text-sm">
           © 2025 POWERZONE ELECTRICALS
         </div>
       </footer>

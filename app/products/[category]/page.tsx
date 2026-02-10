@@ -254,27 +254,246 @@ export default function ProductsPage() {
         </div>
       </header>
 
-      {/* Category Hero Banner */}
-      <div className="relative bg-zinc-900 border-b border-zinc-800">
-        <div className="absolute inset-0 opacity-5" style={{
-          backgroundImage: `radial-gradient(circle at 2px 2px, #a1a1aa 1px, transparent 0)`,
-          backgroundSize: '32px 32px'
-        }}></div>
-        <div className="max-w-7xl mx-auto px-6 md:px-10 py-12 md:py-16 relative z-10">
-          <div className="flex items-center gap-8">
-            <div className="w-20 h-20 md:w-24 md:h-24 bg-zinc-800 rounded-xl flex items-center justify-center p-4 flex-shrink-0">
-              <Image src={category.cover} alt={category.name} width={80} height={80} className="object-contain" />
+      {/* Category Hero Banner - Unique for each category */}
+      {slug === "ceiling-fans" && (
+        <div className="relative bg-zinc-900 border-b border-zinc-800 overflow-hidden">
+          {/* Animated rotating fan blades background */}
+          <div className="absolute inset-0 flex items-center justify-center opacity-5">
+            <div className="animate-spin-slow w-96 h-96">
+              <svg viewBox="0 0 200 200" className="w-full h-full">
+                <path d="M100,20 L100,50 M100,150 L100,180 M20,100 L50,100 M150,100 L180,100" stroke="currentColor" strokeWidth="4" className="text-zinc-400" />
+                <circle cx="100" cy="100" r="8" fill="currentColor" className="text-zinc-400" />
+              </svg>
             </div>
-            <div>
-              <h1 className="text-3xl md:text-4xl font-black tracking-tighter">{category.name}</h1>
-              <p className="text-zinc-500 mt-1">
-                {filteredProducts.length} {filteredProducts.length === 1 ? "product" : "products"}
-                {activeFilterCount > 0 && ` (filtered from ${category.products.length})`}
-              </p>
+          </div>
+          <div className="max-w-7xl mx-auto px-6 md:px-10 py-16 md:py-20 relative z-10">
+            <div className="flex flex-col md:flex-row items-center gap-10">
+              <div className="relative">
+                <div className="w-32 h-32 md:w-40 md:h-40 bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-full flex items-center justify-center p-8 shadow-2xl shadow-amber-500/10 animate-float">
+                  <Image src={category.cover} alt={category.name} width={120} height={120} className="object-contain animate-spin-slow" />
+                </div>
+                <div className="absolute -inset-4 bg-amber-500/5 rounded-full blur-xl"></div>
+              </div>
+              <div className="text-center md:text-left">
+                <h1 className="text-4xl md:text-5xl font-black tracking-tighter bg-gradient-to-r from-zinc-100 to-zinc-400 bg-clip-text text-transparent">
+                  {category.name}
+                </h1>
+                <p className="text-zinc-500 mt-2 text-lg">
+                  {filteredProducts.length} {filteredProducts.length === 1 ? "product" : "products"}
+                  {activeFilterCount > 0 && ` (filtered from ${category.products.length})`}
+                </p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {slug === "ventilation" && (
+        <div className="relative bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-800 border-b border-zinc-800 overflow-hidden">
+          {/* Air flow lines animation */}
+          <div className="absolute inset-0">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute h-px bg-gradient-to-r from-transparent via-cyan-500/20 to-transparent"
+                style={{
+                  top: `${20 + i * 12}%`,
+                  width: '100%',
+                  animation: `slideRight ${3 + i * 0.5}s ease-in-out infinite`,
+                  animationDelay: `${i * 0.3}s`
+                }}
+              ></div>
+            ))}
+          </div>
+          <div className="max-w-7xl mx-auto px-6 md:px-10 py-16 md:py-20 relative z-10">
+            <div className="grid md:grid-cols-2 gap-10 items-center">
+              <div>
+                <div className="inline-block bg-cyan-500/10 border border-cyan-500/30 px-4 py-2 rounded-full mb-4">
+                  <span className="text-xs font-bold text-cyan-400 tracking-widest">EXHAUST FANS</span>
+                </div>
+                <h1 className="text-4xl md:text-5xl font-black tracking-tighter">
+                  <span className="text-cyan-400">AIR FLOW</span>
+                  <span className="block text-zinc-100">SOLUTIONS</span>
+                </h1>
+                <p className="text-zinc-400 mt-4 max-w-md">
+                  {filteredProducts.length} {filteredProducts.length === 1 ? "product" : "products"} for optimal ventilation
+                </p>
+              </div>
+              <div className="relative h-48 flex items-center justify-center">
+                <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-cyan-500/10 to-transparent rounded-full blur-3xl"></div>
+                <Image src={category.cover} alt={category.name} width={160} height={160} className="object-contain relative z-10" />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {slug === "switchgear" && (
+        <div className="relative bg-zinc-900 border-b border-zinc-800 overflow-hidden">
+          {/* Circuit board pattern */}
+          <div className="absolute inset-0 opacity-[0.03]" style={{
+            backgroundImage: `
+              linear-gradient(90deg, #fff 1px, transparent 1px),
+              linear-gradient(0deg, #fff 1px, transparent 1px),
+              linear-gradient(90deg, #fff 2px, transparent 2px),
+              linear-gradient(0deg, #fff 2px, transparent 2px)
+            `,
+            backgroundSize: '20px 20px, 20px 20px, 100px 100px, 100px 100px'
+          }}></div>
+          <div className="max-w-7xl mx-auto px-6 md:px-10 py-16 md:py-20 relative z-10">
+            <div className="grid md:grid-cols-3 gap-8 items-center">
+              <div className="md:col-span-2">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 bg-amber-500 flex items-center justify-center">
+                    <svg className="w-6 h-6 text-zinc-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <h1 className="text-4xl md:text-5xl font-black tracking-tighter">{category.name}</h1>
+                </div>
+                <div className="flex gap-6 text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
+                    <span className="text-zinc-400">Switches</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                    <span className="text-zinc-400">Sockets</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                    <span className="text-zinc-400">Plates</span>
+                  </div>
+                </div>
+                <p className="text-zinc-500 mt-4">{filteredProducts.length} products available</p>
+              </div>
+              <div className="relative h-32 md:h-40">
+                <div className="absolute inset-0 bg-amber-500/5 rounded-2xl"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Image src={category.cover} alt={category.name} width={100} height={100} className="object-contain" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {slug === "chimneys" && (
+        <div className="relative bg-gradient-to-b from-zinc-900 via-zinc-900 to-zinc-950 border-b border-zinc-800 overflow-hidden">
+          {/* Smoke effect */}
+          <div className="absolute inset-0">
+            {[...Array(4)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute bottom-0 w-32 h-64 bg-gradient-to-t from-zinc-700/10 via-zinc-500/5 to-transparent blur-2xl"
+                style={{
+                  left: `${20 + i * 20}%`,
+                  animation: `float ${4 + i}s ease-in-out infinite`,
+                  animationDelay: `${i * 0.8}s`
+                }}
+              ></div>
+            ))}
+          </div>
+          <div className="max-w-7xl mx-auto px-6 md:px-10 py-16 md:py-20 relative z-10">
+            <div className="text-center">
+              <div className="inline-flex items-center gap-3 mb-6">
+                <div className="h-px w-12 bg-gradient-to-r from-transparent to-rose-500"></div>
+                <span className="text-xs font-bold tracking-widest text-rose-400">KITCHEN SOLUTIONS</span>
+                <div className="h-px w-12 bg-gradient-to-l from-transparent to-rose-500"></div>
+              </div>
+              <h1 className="text-4xl md:text-5xl font-black tracking-tighter mb-4">
+                <span className="text-zinc-100">KITCHEN</span> <span className="text-rose-500">CHIMNEYS</span>
+              </h1>
+              <p className="text-zinc-500 max-w-2xl mx-auto">
+                {filteredProducts.length} premium chimneys • Automatic & Manual options
+              </p>
+              <div className="mt-10 relative h-40">
+                <div className="absolute left-1/2 -translate-x-1/2 w-48 h-48 bg-rose-500/5 rounded-full blur-3xl"></div>
+                <Image src={category.cover} alt={category.name} width={180} height={180} className="object-contain mx-auto relative z-10" />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {slug === "wires" && (
+        <div className="relative bg-zinc-900 border-b border-zinc-800 overflow-hidden">
+          {/* Wire/cable pattern */}
+          <div className="absolute inset-0 opacity-10">
+            <svg width="100%" height="100%" className="text-amber-500">
+              <defs>
+                <pattern id="wirePattern" x="0" y="0" width="200" height="200" patternUnits="userSpaceOnUse">
+                  <path d="M0,100 Q50,80 100,100 T200,100" stroke="currentColor" fill="none" strokeWidth="2" />
+                  <path d="M0,120 Q50,140 100,120 T200,120" stroke="currentColor" fill="none" strokeWidth="2" />
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#wirePattern)" />
+            </svg>
+          </div>
+          <div className="max-w-7xl mx-auto px-6 md:px-10 py-16 md:py-20 relative z-10">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-10">
+              <div>
+                <h1 className="text-4xl md:text-5xl font-black tracking-tighter">
+                  <span className="text-amber-500">ELECTRICAL</span>
+                  <span className="block text-zinc-100 mt-1">WIRING</span>
+                </h1>
+                <div className="flex gap-4 mt-6">
+                  <div className="bg-zinc-800 px-4 py-2 rounded-lg border-l-4 border-red-500">
+                    <span className="text-xs text-zinc-400">Red</span>
+                  </div>
+                  <div className="bg-zinc-800 px-4 py-2 rounded-lg border-l-4 border-blue-500">
+                    <span className="text-xs text-zinc-400">Blue</span>
+                  </div>
+                  <div className="bg-zinc-800 px-4 py-2 rounded-lg border-l-4 border-green-500">
+                    <span className="text-xs text-zinc-400">Green</span>
+                  </div>
+                  <div className="bg-zinc-800 px-4 py-2 rounded-lg border-l-4 border-zinc-900">
+                    <span className="text-xs text-zinc-400">Black</span>
+                  </div>
+                </div>
+                <p className="text-zinc-500 mt-4">{filteredProducts.length} products from trusted brands</p>
+              </div>
+              <div className="relative">
+                <div className="w-32 h-32 bg-zinc-800 rounded-2xl flex items-center justify-center p-6">
+                  <Image src={category.cover} alt={category.name} width={100} height={100} className="object-contain" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {slug === "lighting" && (
+        <div className="relative bg-zinc-900 border-b border-zinc-800 overflow-hidden">
+          {/* Light rays effect */}
+          <div className="absolute inset-0">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-yellow-500/5 rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-amber-500/10 rounded-full blur-2xl"></div>
+          </div>
+          <div className="max-w-7xl mx-auto px-6 md:px-10 py-16 md:py-20 relative z-10">
+            <div className="text-center">
+              <div className="inline-flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/30 px-4 py-2 rounded-full mb-6">
+                <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
+                <span className="text-xs font-bold text-yellow-400 tracking-widest">ILLUMINATION</span>
+              </div>
+              <h1 className="text-4xl md:text-6xl font-black tracking-tighter mb-2">
+                <span className="text-yellow-400">LIGHTING</span>
+                <span className="block text-zinc-100 mt-2">SOLUTIONS</span>
+              </h1>
+              <p className="text-zinc-400 mt-4 max-w-2xl mx-auto">
+                {filteredProducts.length} products • Bulbs, Down Lights, Surface Lights & More
+              </p>
+              <div className="mt-10 grid grid-cols-3 md:grid-cols-5 gap-4 max-w-2xl mx-auto">
+                <div className="bg-zinc-800/50 backdrop-blur px-3 py-2 rounded-lg text-xs text-zinc-400">Bulbs</div>
+                <div className="bg-zinc-800/50 backdrop-blur px-3 py-2 rounded-lg text-xs text-zinc-400">Down Lights</div>
+                <div className="bg-zinc-800/50 backdrop-blur px-3 py-2 rounded-lg text-xs text-zinc-400">Surface</div>
+                <div className="bg-zinc-800/50 backdrop-blur px-3 py-2 rounded-lg text-xs text-zinc-400">Tube Lights</div>
+                <div className="bg-zinc-800/50 backdrop-blur px-3 py-2 rounded-lg text-xs text-zinc-400">Spots</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Mobile Filter Panel */}
       {mobileFiltersOpen && (

@@ -183,6 +183,13 @@ html {
   100% { transform: translateX(-50%) translateZ(0) scaleY(1); }
 }
 
+/* Slide animations for product pages */
+@keyframes slideRight {
+  0% { transform: translateX(-100%); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateX(100%); opacity: 0; }
+}
+
 /* Typewriter cursor */
 @keyframes blink {
   0%, 50% { opacity: 1; }

@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 const brandLogos = [
   { name: "Havells", src: "/assets/logos/havells-logo.svg" },
@@ -26,15 +28,6 @@ const rotatingProducts = [
   { name: "Glen Chimney", category: "CHIMNEY", image: "/assets/chimneys/Glen-automatic-chimney.png" },
 ];
 
-const categories = [
-  { name: "CEILING FANS", count: "28+", image: "/assets/category-cover/fan-cover.png", slug: "ceiling-fans" },
-  { name: "VENTILATION", count: "12+", image: "/assets/category-cover/haveels-venti.png", slug: "ventilation" },
-  { name: "SWITCHGEAR", count: "50+", image: "/assets/category-cover/switch-cover.png", slug: "switchgear" },
-  { name: "CHIMNEYS", count: "8+", image: "/assets/category-cover/sakash-automatic-chimney.png", slug: "chimneys" },
-  { name: "WIRES", count: "20+", image: "/assets/category-cover/havells-wire.png", slug: "wires" },
-  { name: "LIGHTING", count: "35+", image: "/assets/category-cover/celing-light.png", slug: "lighting" },
-];
-
 const reviews = [
   { name: "RAJESH K.", rating: 5, text: "Excellent service and genuine products. Been buying here for 10 years!" },
   { name: "PRIYA S.", rating: 5, text: "Best prices in the city. Staff is very helpful and knowledgeable." },
@@ -44,6 +37,9 @@ const reviews = [
 export default function HomePage() {
   const observerRef = useRef<IntersectionObserver | null>(null);
   const [activeProductIndex, setActiveProductIndex] = useState(0);
+
+  // Fetch categories from Convex
+  const dbCategories = useQuery(api.categories.list);
 
   useEffect(() => {
     observerRef.current = new IntersectionObserver(
@@ -69,6 +65,14 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, []);
 
+  // Map DB categories to display format
+  const categories = dbCategories?.map((cat) => ({
+    name: cat.name.toUpperCase(),
+    count: "", // Will be filled by product count
+    image: cat.coverImage,
+    slug: cat.slug,
+  })) ?? [];
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
       {/* Hero Section */}
@@ -78,7 +82,7 @@ export default function HomePage() {
           <div className="absolute top-0 left-1/4 w-96 h-96 bg-amber-500/20 rounded-full blur-3xl"></div>
           <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-orange-600/10 rounded-full blur-3xl"></div>
         </div>
-        
+
         {/* Grid Pattern */}
         <div className="absolute inset-0 opacity-10" style={{
           backgroundImage: `linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)`,
@@ -112,9 +116,9 @@ export default function HomePage() {
               <div className="absolute inset-0 rounded-full border border-zinc-800"></div>
               <div className="absolute inset-6 rounded-full border border-zinc-800/50"></div>
               <div className="absolute inset-12 rounded-full border border-dashed border-amber-500/30"></div>
-              
+
               {/* Rotating thumbnails */}
-              <div 
+              <div
                 className="absolute inset-0 transition-transform duration-1000 ease-out"
                 style={{ transform: `rotate(-${activeProductIndex * 45}deg)` }}
               >
@@ -126,10 +130,9 @@ export default function HomePage() {
                       className="absolute left-1/2 top-1/2"
                       style={{ transform: `rotate(${angle}deg) translateY(-130px)` }}
                     >
-                      <div 
-                        className={`w-12 h-12 md:w-16 md:h-16 rounded-full bg-zinc-900 border-2 flex items-center justify-center p-2 -ml-6 -mt-6 md:-ml-8 md:-mt-8 transition-all duration-500 ${
-                          i === activeProductIndex ? 'border-amber-500 scale-110 bg-zinc-800' : 'border-zinc-700'
-                        }`}
+                      <div
+                        className={`w-12 h-12 md:w-16 md:h-16 rounded-full bg-zinc-900 border-2 flex items-center justify-center p-2 -ml-6 -mt-6 md:-ml-8 md:-mt-8 transition-all duration-500 ${i === activeProductIndex ? 'border-amber-500 scale-110 bg-zinc-800' : 'border-zinc-700'
+                          }`}
                         style={{ transform: `rotate(${activeProductIndex * 45}deg)` }}
                       >
                         <Image src={product.image} alt={product.name} width={40} height={40} className="object-contain" />
@@ -146,9 +149,8 @@ export default function HomePage() {
                     {rotatingProducts.map((product, i) => (
                       <div
                         key={i}
-                        className={`absolute inset-0 transition-all duration-500 ${
-                          i === activeProductIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
-                        }`}
+                        className={`absolute inset-0 transition-all duration-500 ${i === activeProductIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
+                          }`}
                       >
                         <Image src={product.image} alt={product.name} fill className="object-contain" />
                       </div>
@@ -162,11 +164,10 @@ export default function HomePage() {
               {/* Progress indicator */}
               <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 flex gap-1.5">
                 {rotatingProducts.map((_, i) => (
-                  <div 
-                    key={i} 
-                    className={`h-1 transition-all duration-300 ${
-                      i === activeProductIndex ? 'w-6 bg-amber-500' : 'w-1.5 bg-zinc-700'
-                    }`}
+                  <div
+                    key={i}
+                    className={`h-1 transition-all duration-300 ${i === activeProductIndex ? 'w-6 bg-amber-500' : 'w-1.5 bg-zinc-700'
+                      }`}
                   ></div>
                 ))}
               </div>
@@ -180,7 +181,7 @@ export default function HomePage() {
                 <div className="w-2 h-2 bg-amber-500 animate-pulse"></div>
                 <span className="text-xs font-bold tracking-widest text-zinc-400">ELECTRICAL SUPERSTORE</span>
               </div>
-              
+
               <h1 className="text-5xl md:text-6xl lg:text-7xl font-black leading-[0.9] tracking-tighter">
                 <span className="text-amber-500">PREMIUM</span>
                 <span className="block text-zinc-100">ELECTRICALS</span>
@@ -239,40 +240,52 @@ export default function HomePage() {
             <p className="text-zinc-500 text-sm mt-4 md:mt-0">Explore our complete range</p>
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
-            {categories.map((cat, i) => (
-              <Link
-                key={i}
-                href={`/products/${cat.slug}`}
-                className="scroll-animate from-bottom group cursor-pointer block"
-                style={{ animationDelay: `${i * 80}ms` }}
-              >
-                <div className="relative h-56 md:h-72 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(245,158,11,0.12)] hover:border-amber-500/40">
-                  {/* Product image - fills card */}
-                  <div className="absolute inset-0 flex items-center justify-center p-8 md:p-10">
-                    <Image
-                      src={cat.image}
-                      alt={cat.name}
-                      width={160}
-                      height={160}
-                      className="object-contain w-full h-full max-w-[140px] md:max-w-[160px] transition-transform duration-300 group-hover:scale-110"
-                    />
+          {!dbCategories ? (
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="relative h-56 md:h-72 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden animate-pulse">
+                  <div className="absolute bottom-0 left-0 right-0 pt-10 pb-5 px-5">
+                    <div className="h-5 bg-zinc-800 rounded w-24"></div>
+                    <div className="h-3 bg-zinc-800 rounded w-16 mt-2"></div>
                   </div>
-
-                  {/* Bottom label overlay */}
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-zinc-950 via-zinc-950/90 to-transparent pt-10 pb-5 px-5">
-                    <h3 className="font-black text-base md:text-lg text-zinc-100 group-hover:text-amber-400 transition-colors duration-200">
-                      {cat.name}
-                    </h3>
-                    <p className="text-xs text-zinc-500 mt-0.5">{cat.count} products</p>
-                  </div>
-
-                  {/* Hover accent line */}
-                  <div className="absolute bottom-0 left-0 h-[3px] w-0 bg-amber-500 group-hover:w-full transition-all duration-500"></div>
                 </div>
-              </Link>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+              {categories.map((cat, i) => (
+                <Link
+                  key={i}
+                  href={`/products/${cat.slug}`}
+                  className="scroll-animate from-bottom group cursor-pointer block"
+                  style={{ animationDelay: `${i * 80}ms` }}
+                >
+                  <div className="relative h-56 md:h-72 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(245,158,11,0.12)] hover:border-amber-500/40">
+                    {/* Product image - fills card */}
+                    <div className="absolute inset-0 flex items-center justify-center p-8 md:p-10">
+                      <Image
+                        src={cat.image}
+                        alt={cat.name}
+                        width={160}
+                        height={160}
+                        className="object-contain w-full h-full max-w-[140px] md:max-w-[160px] transition-transform duration-300 group-hover:scale-110"
+                      />
+                    </div>
+
+                    {/* Bottom label overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-zinc-950 via-zinc-950/90 to-transparent pt-10 pb-5 px-5">
+                      <h3 className="font-black text-base md:text-lg text-zinc-100 group-hover:text-amber-400 transition-colors duration-200">
+                        {cat.name}
+                      </h3>
+                    </div>
+
+                    {/* Hover accent line */}
+                    <div className="absolute bottom-0 left-0 h-[3px] w-0 bg-amber-500 group-hover:w-full transition-all duration-500"></div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -286,8 +299,8 @@ export default function HomePage() {
               { icon: "◈", title: "BEST PRICES", desc: "Competitive pricing guaranteed" },
               { icon: "★", title: "20+ YEARS", desc: "Two decades of trust and excellence" },
             ].map((item, i) => (
-              <div 
-                key={i} 
+              <div
+                key={i}
                 className="scroll-animate from-bottom text-center bg-zinc-800/50 border border-zinc-700/50 rounded-lg p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_0_25px_rgba(245,158,11,0.15)] hover:border-amber-500/40 cursor-pointer"
                 style={{ animationDelay: `${i * 100}ms` }}
               >

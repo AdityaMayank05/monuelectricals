@@ -11,7 +11,7 @@ export default defineSchema({
 
     products: defineTable({
         categoryId: v.id("categories"),
-        excelId: v.string(),
+        excelId: v.optional(v.string()),
         name: v.string(),
         brand: v.string(),
         image: v.string(),

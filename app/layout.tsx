@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Power Zone Electricals | Premium Electrical Store",
+  title: "Monu Electricals | Premium Electrical Store",
   description: "Powering Homes & Businesses Since 2005. Leading supplier of premium electrical products.",
 };
 

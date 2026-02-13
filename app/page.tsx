@@ -93,10 +93,10 @@ export default function HomePage() {
         <header className="relative z-10 flex justify-between items-center px-6 md:px-12 lg:px-20 py-6">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 bg-amber-500 flex items-center justify-center">
-              <span className="text-zinc-950 font-black text-lg">P</span>
+              <span className="text-zinc-950 font-black text-lg">M</span>
             </div>
             <span className="text-xl font-black tracking-tighter">
-              POWER<span className="text-amber-500">ZONE</span>
+              MONU<span className="text-amber-500">ELECTRICALS</span>
             </span>
           </div>
           <div className="flex items-center gap-6">
@@ -346,10 +346,10 @@ export default function HomePage() {
           <div className="md:col-span-2">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-amber-500 flex items-center justify-center">
-                <span className="text-zinc-950 font-black text-lg">P</span>
+                <span className="text-zinc-950 font-black text-lg">M</span>
               </div>
               <span className="text-xl font-black tracking-tighter">
-                POWER<span className="text-amber-500">ZONE</span>
+                MONU<span className="text-amber-500">ELECTRICALS</span>
               </span>
             </div>
             <p className="text-zinc-500 mt-4">Premium electrical products since 2005.</p>
@@ -373,7 +373,7 @@ export default function HomePage() {
           </div>
         </div>
         <div className="max-w-7xl mx-auto mt-12 pt-8 border-t border-zinc-800 text-center text-zinc-600 text-sm">
-          © 2025 POWERZONE ELECTRICALS
+          © 2025 MONU ELECTRICALS
         </div>
       </footer>
     </div>

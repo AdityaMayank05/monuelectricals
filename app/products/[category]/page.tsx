@@ -139,8 +139,8 @@ export default function ProductsPage() {
                 key={brand}
                 onClick={() => toggleFilter(brand, selectedBrands, setSelectedBrands)}
                 className={`flex items-center gap-3 w-full text-left px-3 py-2 text-sm transition-colors cursor-pointer rounded ${selectedBrands.includes(brand)
-                    ? "bg-amber-500/15 text-amber-400 border border-amber-500/30"
-                    : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 border border-transparent"
+                  ? "bg-amber-500/15 text-amber-400 border border-amber-500/30"
+                  : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 border border-transparent"
                   }`}
               >
                 <div className={`w-4 h-4 border rounded flex items-center justify-center flex-shrink-0 ${selectedBrands.includes(brand) ? "border-amber-500 bg-amber-500" : "border-zinc-600"
@@ -166,8 +166,8 @@ export default function ProductsPage() {
                 key={type}
                 onClick={() => toggleFilter(type, selectedTypes, setSelectedTypes)}
                 className={`flex items-center gap-3 w-full text-left px-3 py-2 text-sm transition-colors cursor-pointer rounded ${selectedTypes.includes(type)
-                    ? "bg-amber-500/15 text-amber-400 border border-amber-500/30"
-                    : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 border border-transparent"
+                  ? "bg-amber-500/15 text-amber-400 border border-amber-500/30"
+                  : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 border border-transparent"
                   }`}
               >
                 <div className={`w-4 h-4 border rounded flex items-center justify-center flex-shrink-0 ${selectedTypes.includes(type) ? "border-amber-500 bg-amber-500" : "border-zinc-600"
@@ -193,8 +193,8 @@ export default function ProductsPage() {
                 key={color}
                 onClick={() => toggleFilter(color, selectedColors, setSelectedColors)}
                 className={`px-3 py-1.5 text-xs font-medium transition-all cursor-pointer rounded-full border ${selectedColors.includes(color)
-                    ? "bg-amber-500/15 text-amber-400 border-amber-500/50"
-                    : "text-zinc-400 border-zinc-700 hover:border-zinc-500 hover:text-zinc-200"
+                  ? "bg-amber-500/15 text-amber-400 border-amber-500/50"
+                  : "text-zinc-400 border-zinc-700 hover:border-zinc-500 hover:text-zinc-200"
                   }`}
               >
                 {color}
@@ -224,8 +224,8 @@ export default function ProductsPage() {
                 key={cat.slug}
                 href={`/products/${cat.slug}`}
                 className={`block px-3 py-2 text-sm rounded transition-colors ${cat.slug === slug
-                    ? "bg-amber-500/15 text-amber-400 font-bold"
-                    : "text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800"
+                  ? "bg-amber-500/15 text-amber-400 font-bold"
+                  : "text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800"
                   }`}
               >
                 {cat.name}
@@ -245,10 +245,10 @@ export default function ProductsPage() {
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-3 cursor-pointer">
               <div className="w-9 h-9 bg-amber-500 flex items-center justify-center">
-                <span className="text-zinc-950 font-black">P</span>
+                <span className="text-zinc-950 font-black">M</span>
               </div>
               <span className="text-lg font-black tracking-tighter">
-                POWER<span className="text-amber-500">ZONE</span>
+                MONU<span className="text-amber-500">ELECTRICALS</span>
               </span>
             </Link>
             {/* Breadcrumb */}
@@ -441,13 +441,13 @@ export default function ProductsPage() {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <Link href="/" className="flex items-center gap-3 cursor-pointer">
             <div className="w-8 h-8 bg-amber-500 flex items-center justify-center">
-              <span className="text-zinc-950 font-black text-sm">P</span>
+              <span className="text-zinc-950 font-black text-sm">M</span>
             </div>
             <span className="text-lg font-black tracking-tighter">
-              POWER<span className="text-amber-500">ZONE</span>
+              MONU<span className="text-amber-500">ELECTRICALS</span>
             </span>
           </Link>
-          <p className="text-zinc-600 text-sm">© 2025 POWERZONE ELECTRICALS</p>
+          <p className="text-zinc-600 text-sm">© 2025 MONU ELECTRICALS</p>
         </div>
       </footer>
     </div>

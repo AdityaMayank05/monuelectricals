@@ -53,3 +53,10 @@ export const getColorsForCategory = query({
         return colors;
     },
 });
+
+export const listAll = query({
+    args: {},
+    handler: async (ctx) => {
+        return await ctx.db.query("products").collect();
+    },
+});

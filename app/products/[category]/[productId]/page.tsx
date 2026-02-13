@@ -143,10 +143,10 @@ export default function ProductDetailPage() {
                     <div className="flex items-center gap-6">
                         <Link href="/" className="flex items-center gap-3 cursor-pointer">
                             <div className="w-9 h-9 bg-amber-500 flex items-center justify-center">
-                                <span className="text-zinc-950 font-black">P</span>
+                                <span className="text-zinc-950 font-black">M</span>
                             </div>
                             <span className="text-lg font-black tracking-tighter hidden sm:block">
-                                POWER<span className="text-amber-500">ZONE</span>
+                                MONU<span className="text-amber-500">ELECTRICALS</span>
                             </span>
                         </Link>
                         {/* Breadcrumb */}
@@ -426,13 +426,13 @@ export default function ProductDetailPage() {
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
                     <Link href="/" className="flex items-center gap-3 cursor-pointer">
                         <div className="w-8 h-8 bg-amber-500 flex items-center justify-center">
-                            <span className="text-zinc-950 font-black text-sm">P</span>
+                            <span className="text-zinc-950 font-black text-sm">M</span>
                         </div>
                         <span className="text-lg font-black tracking-tighter">
-                            POWER<span className="text-amber-500">ZONE</span>
+                            MONU<span className="text-amber-500">ELECTRICALS</span>
                         </span>
                     </Link>
-                    <p className="text-zinc-600 text-sm">© 2025 POWERZONE ELECTRICALS</p>
+                    <p className="text-zinc-600 text-sm">© 2025 MONU ELECTRICALS</p>
                 </div>
             </footer>
         </div>

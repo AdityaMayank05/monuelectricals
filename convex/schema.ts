@@ -24,6 +24,7 @@ export default defineSchema({
         price: v.optional(v.string()),
         motor: v.optional(v.string()),
         energy: v.optional(v.string()),
+        outOfStock: v.optional(v.boolean()),
     })
         .index("by_category", ["categoryId"])
         .index("by_brand", ["brand"]),

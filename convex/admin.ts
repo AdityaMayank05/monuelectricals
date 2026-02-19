@@ -60,6 +60,7 @@ export const createProduct = mutation({
         shape: v.optional(v.string()),
         motor: v.optional(v.string()),
         energy: v.optional(v.string()),
+        outOfStock: v.optional(v.boolean()),
     },
     handler: async (ctx, args) => {
         await checkAdmin(ctx);
@@ -78,6 +79,7 @@ export const updateProduct = mutation({
         color: v.optional(v.string()),
         size: v.optional(v.string()),
         subCategory: v.optional(v.string()),
+        outOfStock: v.optional(v.boolean()),
     },
     handler: async (ctx, args) => {
         await checkAdmin(ctx);

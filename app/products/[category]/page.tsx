@@ -391,7 +391,7 @@ export default function ProductsPage() {
                   <Link
                     key={product._id}
                     href={`/products/${slug}/${product._id}`}
-                    className="group cursor-pointer bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(245,158,11,0.08)] hover:border-amber-500/30 block"
+                    className={`group cursor-pointer bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(245,158,11,0.08)] hover:border-amber-500/30 block ${product.outOfStock ? "opacity-75" : ""}`}
                   >
                     {/* Product Image */}
                     <div className="relative bg-zinc-900 aspect-square flex items-center justify-center p-6 md:p-8">
@@ -400,17 +400,23 @@ export default function ProductsPage() {
                         alt={`${product.brand} ${product.name}`}
                         width={200}
                         height={200}
-                        className="object-contain w-full h-full transition-transform duration-300 group-hover:scale-110"
+                        className={`object-contain w-full h-full transition-transform duration-300 group-hover:scale-110 ${product.outOfStock ? "grayscale-[40%]" : ""}`}
                       />
                       {/* Brand badge */}
                       <span className="absolute top-3 left-3 bg-zinc-800/90 text-zinc-400 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded">
                         {product.brand}
                       </span>
+                      {/* Out of Stock badge */}
+                      {product.outOfStock && (
+                        <span className="absolute top-3 right-3 bg-red-500/90 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-lg">
+                          Out of Stock
+                        </span>
+                      )}
                     </div>
 
                     {/* Product Info */}
                     <div className="px-4 py-4 border-t border-zinc-800/50">
-                      <h3 className="font-bold text-sm text-zinc-200 group-hover:text-amber-400 transition-colors duration-200 truncate">
+                      <h3 className={`font-bold text-sm transition-colors duration-200 truncate ${product.outOfStock ? "text-zinc-500" : "text-zinc-200 group-hover:text-amber-400"}`}>
                         {product.brand} {product.name}
                       </h3>
                       <div className="flex items-center gap-2 mt-1.5">
@@ -425,7 +431,7 @@ export default function ProductsPage() {
                         )}
                       </div>
                       {product.price && (
-                        <p className="text-amber-400 font-bold text-sm mt-2">{product.price}</p>
+                        <p className={`font-bold text-sm mt-2 ${product.outOfStock ? "text-zinc-600 line-through" : "text-amber-400"}`}>{product.price}</p>
                       )}
                     </div>
                   </Link>

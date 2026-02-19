@@ -41,6 +41,14 @@ export default function HomePage() {
   // Fetch categories from Convex
   const dbCategories = useQuery(api.categories.list);
 
+  // Map DB categories to display format
+  const categories = dbCategories?.map((cat) => ({
+    name: cat.name.toUpperCase(),
+    count: "", // Will be filled by product count
+    image: cat.coverImage,
+    slug: cat.slug,
+  })) ?? [];
+
   useEffect(() => {
     observerRef.current = new IntersectionObserver(
       (entries) => {
@@ -56,7 +64,7 @@ export default function HomePage() {
       observerRef.current?.observe(el);
     });
     return () => observerRef.current?.disconnect();
-  }, []);
+  }, [dbCategories]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -64,14 +72,6 @@ export default function HomePage() {
     }, 2500);
     return () => clearInterval(interval);
   }, []);
-
-  // Map DB categories to display format
-  const categories = dbCategories?.map((cat) => ({
-    name: cat.name.toUpperCase(),
-    count: "", // Will be filled by product count
-    image: cat.coverImage,
-    slug: cat.slug,
-  })) ?? [];
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">

@@ -222,7 +222,13 @@ export default function ProductDetailPage() {
                     <div className="flex flex-col">
                         {/* Title */}
                         <div>
-                            <div className="flex items-center gap-3 mb-3">
+                            <div className="flex items-center gap-3 mb-3 flex-wrap">
+                                {product.outOfStock && (
+                                    <span className="bg-red-500/15 border border-red-500/30 text-red-400 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full flex items-center gap-1.5">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+                                        Out of Stock
+                                    </span>
+                                )}
                                 {product.type && (
                                     <span className="bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full">
                                         {product.type}
@@ -354,14 +360,19 @@ export default function ProductDetailPage() {
                             {[
                                 { icon: "✓", label: "100% Genuine" },
                                 { icon: "◈", label: "Best Price" },
-                                { icon: "⚡", label: "In Stock" },
+                                product.outOfStock
+                                    ? { icon: "✕", label: "Out of Stock", isRed: true }
+                                    : { icon: "⚡", label: "In Stock" },
                             ].map((badge) => (
                                 <div
                                     key={badge.label}
-                                    className="flex flex-col items-center gap-1.5 bg-zinc-900/50 border border-zinc-800/50 rounded-lg py-3 px-2"
+                                    className={`flex flex-col items-center gap-1.5 rounded-lg py-3 px-2 ${'isRed' in badge && badge.isRed
+                                            ? "bg-red-500/5 border border-red-500/20"
+                                            : "bg-zinc-900/50 border border-zinc-800/50"
+                                        }`}
                                 >
-                                    <span className="text-amber-500 text-lg">{badge.icon}</span>
-                                    <span className="text-[11px] text-zinc-500 font-medium">{badge.label}</span>
+                                    <span className={'isRed' in badge && badge.isRed ? "text-red-400 text-lg" : "text-amber-500 text-lg"}>{badge.icon}</span>
+                                    <span className={'isRed' in badge && badge.isRed ? "text-[11px] text-red-400 font-medium" : "text-[11px] text-zinc-500 font-medium"}>{badge.label}</span>
                                 </div>
                             ))}
                         </div>

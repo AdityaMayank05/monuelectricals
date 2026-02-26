@@ -338,7 +338,7 @@ export default function ProductDetailPage() {
                         {/* CTA - WhatsApp */}
                         <div className="mt-10 flex flex-col sm:flex-row gap-3">
                             <a
-                                href={`https://wa.me/919876543210?text=Hi! I'm interested in the ${product.brand} ${product.name}${product.size ? ` (${product.size})` : ""}${product.color ? ` in ${product.color}` : ""}`}
+                                href={`https://wa.me/919213684115?text=Hi! I'm interested in the ${product.brand} ${product.name}${product.size ? ` (${product.size})` : ""}${product.color ? ` in ${product.color}` : ""}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex-1 flex items-center justify-center gap-3 bg-green-600 hover:bg-green-500 text-white font-bold py-4 px-6 text-sm transition-all duration-200 rounded-xl cursor-pointer shadow-lg shadow-green-600/20 hover:shadow-green-500/30"
@@ -347,7 +347,7 @@ export default function ProductDetailPage() {
                                 Enquire on WhatsApp
                             </a>
                             <a
-                                href="tel:+919876543210"
+                                href="tel:+919213684115"
                                 className="flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 font-bold py-4 px-6 text-sm transition-all duration-200 rounded-xl cursor-pointer"
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
@@ -367,8 +367,8 @@ export default function ProductDetailPage() {
                                 <div
                                     key={badge.label}
                                     className={`flex flex-col items-center gap-1.5 rounded-lg py-3 px-2 ${'isRed' in badge && badge.isRed
-                                            ? "bg-red-500/5 border border-red-500/20"
-                                            : "bg-zinc-900/50 border border-zinc-800/50"
+                                        ? "bg-red-500/5 border border-red-500/20"
+                                        : "bg-zinc-900/50 border border-zinc-800/50"
                                         }`}
                                 >
                                     <span className={'isRed' in badge && badge.isRed ? "text-red-400 text-lg" : "text-amber-500 text-lg"}>{badge.icon}</span>
@@ -433,17 +433,39 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Footer */}
-            <footer className="bg-zinc-900 border-t border-zinc-800 py-10 px-6 md:px-10 mt-20">
-                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-                    <Link href="/" className="flex items-center gap-3 cursor-pointer">
-                        <div className="w-8 h-8 bg-amber-500 flex items-center justify-center">
-                            <span className="text-zinc-950 font-black text-sm">M</span>
+            <footer className="bg-zinc-900 border-t border-zinc-800 py-16 px-6 md:px-10 mt-20">
+                <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
+                    <div className="md:col-span-2">
+                        <Link href="/" className="flex items-center gap-3 cursor-pointer">
+                            <div className="w-9 h-9 bg-amber-500 flex items-center justify-center">
+                                <span className="text-zinc-950 font-black">M</span>
+                            </div>
+                            <span className="text-lg font-black tracking-tighter">
+                                MONU<span className="text-amber-500">ELECTRICALS</span>
+                            </span>
+                        </Link>
+                        <p className="text-zinc-500 mt-4 text-sm">Premium electrical products since 2005.</p>
+                        <div className="flex gap-3 mt-6">
+                            {["FB", "IG", "WA"].map((s) => (
+                                <a key={s} href="#" className="w-10 h-10 border border-zinc-700 flex items-center justify-center text-zinc-500 hover:text-amber-500 hover:border-amber-500 transition-colors duration-200 cursor-pointer text-xs font-bold">
+                                    {s}
+                                </a>
+                            ))}
                         </div>
-                        <span className="text-lg font-black tracking-tighter">
-                            MONU<span className="text-amber-500">ELECTRICALS</span>
-                        </span>
-                    </Link>
-                    <p className="text-zinc-600 text-sm">© 2025 MONU ELECTRICALS</p>
+                    </div>
+                    <div>
+                        <h4 className="font-black text-amber-500 mb-4 text-sm">BRANCH 01</h4>
+                        <p className="text-zinc-500 text-sm">Sector -10 , vasundhara , Ghaziabad,UP</p>
+                        <p className="text-zinc-500 text-sm">9213684115</p>
+                    </div>
+                    <div>
+                        <h4 className="font-black text-amber-500 mb-4 text-sm">BRANCH 02</h4>
+                        <p className="text-zinc-500 text-sm">Plot No-10, Govind Vihar II, Govindpuram, Ghaziabad,UP</p>
+                        <p className="text-zinc-500 text-sm">9810468106</p>
+                    </div>
+                </div>
+                <div className="max-w-7xl mx-auto mt-12 pt-8 border-t border-zinc-800 text-center text-zinc-600 text-sm">
+                    © 2025 MONU ELECTRICALS
                 </div>
             </footer>
         </div>

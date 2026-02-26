@@ -443,17 +443,39 @@ export default function ProductsPage() {
       </div>
 
       {/* Footer */}
-      <footer className="bg-zinc-900 border-t border-zinc-800 py-10 px-6 md:px-10 mt-20">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-          <Link href="/" className="flex items-center gap-3 cursor-pointer">
-            <div className="w-8 h-8 bg-amber-500 flex items-center justify-center">
-              <span className="text-zinc-950 font-black text-sm">M</span>
+      <footer className="bg-zinc-900 border-t border-zinc-800 py-16 px-6 md:px-10 mt-20">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
+          <div className="md:col-span-2">
+            <Link href="/" className="flex items-center gap-3 cursor-pointer">
+              <div className="w-9 h-9 bg-amber-500 flex items-center justify-center">
+                <span className="text-zinc-950 font-black">M</span>
+              </div>
+              <span className="text-lg font-black tracking-tighter">
+                MONU<span className="text-amber-500">ELECTRICALS</span>
+              </span>
+            </Link>
+            <p className="text-zinc-500 mt-4 text-sm">Premium electrical products since 2005.</p>
+            <div className="flex gap-3 mt-6">
+              {["FB", "IG", "WA"].map((s) => (
+                <a key={s} href="#" className="w-10 h-10 border border-zinc-700 flex items-center justify-center text-zinc-500 hover:text-amber-500 hover:border-amber-500 transition-colors duration-200 cursor-pointer text-xs font-bold">
+                  {s}
+                </a>
+              ))}
             </div>
-            <span className="text-lg font-black tracking-tighter">
-              MONU<span className="text-amber-500">ELECTRICALS</span>
-            </span>
-          </Link>
-          <p className="text-zinc-600 text-sm">© 2025 MONU ELECTRICALS</p>
+          </div>
+          <div>
+            <h4 className="font-black text-amber-500 mb-4 text-sm">BRANCH 01</h4>
+            <p className="text-zinc-500 text-sm">Sector -10 , vasundhara , Ghaziabad,UP</p>
+            <p className="text-zinc-500 text-sm">9213684115</p>
+          </div>
+          <div>
+            <h4 className="font-black text-amber-500 mb-4 text-sm">BRANCH 02</h4>
+            <p className="text-zinc-500 text-sm">Plot No-10, Govind Vihar II, Govindpuram, Ghaziabad,UP</p>
+            <p className="text-zinc-500 text-sm">9810468106</p>
+          </div>
+        </div>
+        <div className="max-w-7xl mx-auto mt-12 pt-8 border-t border-zinc-800 text-center text-zinc-600 text-sm">
+          © 2025 MONU ELECTRICALS
         </div>
       </footer>
     </div>

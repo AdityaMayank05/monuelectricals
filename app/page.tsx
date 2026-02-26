@@ -18,14 +18,14 @@ const brandLogos = [
 ];
 
 const rotatingProducts = [
-  { name: "Havells Enticer", category: "CEILING FAN", image: "/assets/fans/havells-enticer-brown.png" },
-  { name: "Crompton Venti", category: "EXHAUST FAN", image: "/assets/ventilation-fans/crompton-venti.png" },
-  { name: "Atomberg Renesa", category: "BLDC FAN", image: "/assets/fans/atomberg-renesa-white.png" },
-  { name: "Sakash Chimney", category: "CHIMNEY", image: "/assets/chimneys/Sakashchimney.png" },
-  { name: "Bajaj Artisan", category: "DESIGNER FAN", image: "/assets/fans/bajaj-artisan-grey.png" },
-  { name: "Havells Venti", category: "VENTILATION", image: "/assets/ventilation-fans/haveels-venti.png" },
-  { name: "Orient Blanco", category: "MODERN FAN", image: "/assets/fans/orient-blanco-white.png" },
-  { name: "Glen Chimney", category: "CHIMNEY", image: "/assets/chimneys/Glen-automatic-chimney.png" },
+  { name: "Havells Enticer", category: "CEILING FAN", image: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930951/monuelectricals/fans/havells-enticer-brown.png" },
+  { name: "Crompton Venti", category: "EXHAUST FAN", image: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931247/monuelectricals/ventilation-fans/crompton-venti.png" },
+  { name: "Atomberg Renesa", category: "BLDC FAN", image: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930937/monuelectricals/fans/atomberg-renesa-white.png" },
+  { name: "Sakash Chimney", category: "CHIMNEY", image: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930932/monuelectricals/chimneys/Sakashchimney.png" },
+  { name: "Bajaj Artisan", category: "DESIGNER FAN", image: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930940/monuelectricals/fans/bajaj-artisan-grey.png" },
+  { name: "Havells Venti", category: "VENTILATION", image: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931251/monuelectricals/ventilation-fans/haveels-venti.png" },
+  { name: "Orient Blanco", category: "MODERN FAN", image: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930970/monuelectricals/fans/orient-blanco-white.png" },
+  { name: "Glen Chimney", category: "CHIMNEY", image: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930925/monuelectricals/chimneys/Glen-automatic-chimney.png" },
 ];
 
 const reviews = [
@@ -362,14 +362,14 @@ export default function HomePage() {
             </div>
           </div>
           <div>
-            <h4 className="font-black text-amber-500 mb-4 text-sm">STORE 01</h4>
-            <p className="text-zinc-500 text-sm">123 Main Market Road</p>
-            <p className="text-zinc-500 text-sm">+91 98765 43210</p>
+            <h4 className="font-black text-amber-500 mb-4 text-sm">BRANCH 01</h4>
+            <p className="text-zinc-500 text-sm">Sector -10 , vasundhara , Ghaziabad,UP</p>
+            <p className="text-zinc-500 text-sm">9213684115</p>
           </div>
           <div>
-            <h4 className="font-black text-amber-500 mb-4 text-sm">STORE 02</h4>
-            <p className="text-zinc-500 text-sm">456 City Center Plaza</p>
-            <p className="text-zinc-500 text-sm">+91 98765 43211</p>
+            <h4 className="font-black text-amber-500 mb-4 text-sm">BRANCH 02</h4>
+            <p className="text-zinc-500 text-sm">Plot No-10, Govind Vihar II, Govindpuram, Ghaziabad,UP</p>
+            <p className="text-zinc-500 text-sm">9810468106</p>
           </div>
         </div>
         <div className="max-w-7xl mx-auto mt-12 pt-8 border-t border-zinc-800 text-center text-zinc-600 text-sm">

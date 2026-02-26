@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { Id } from "@/convex/_generated/dataModel";
@@ -19,7 +19,6 @@ export default function EditProductPage() {
     const [formData, setFormData] = useState({
         name: "",
         price: "",
-        image: "",
         brand: "",
         type: "",
         color: "",
@@ -27,37 +26,114 @@ export default function EditProductPage() {
         outOfStock: false,
     });
 
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string>("");
+    const [existingImageUrl, setExistingImageUrl] = useState<string>("");
+    const [uploading, setUploading] = useState(false);
     const [loading, setLoading] = useState(false);
     const [saved, setSaved] = useState(false);
+    const [dragOver, setDragOver] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (product) {
             setFormData({
                 name: product.name,
                 price: product.price || "",
-                image: product.image,
                 brand: product.brand,
                 type: product.type || "",
                 color: product.color || "",
                 size: product.size || "",
                 outOfStock: product.outOfStock ?? false,
             });
+            setExistingImageUrl(product.image);
+            if (!imageFile) {
+                setImagePreview(product.image);
+            }
         }
-    }, [product]);
+    }, [product, imageFile]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
+    const handleFileSelect = useCallback((file: File) => {
+        if (!file.type.startsWith("image/")) {
+            alert("Please select an image file");
+            return;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+            alert("Image must be less than 10MB");
+            return;
+        }
+        setImageFile(file);
+        setImagePreview(URL.createObjectURL(file));
+    }, []);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) handleFileSelect(file);
+    };
+
+    const handleDrop = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        setDragOver(false);
+        const file = e.dataTransfer.files[0];
+        if (file) handleFileSelect(file);
+    }, [handleFileSelect]);
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        setDragOver(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        setDragOver(false);
+    };
+
+    const removeNewImage = () => {
+        setImageFile(null);
+        setImagePreview(existingImageUrl);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+    };
+
+    const uploadImage = async (file: File): Promise<string> => {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const res = await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+        });
+
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || "Upload failed");
+        }
+
+        const data = await res.json();
+        return data.url;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         try {
+            let imageUrl = existingImageUrl;
+
+            // Upload new image if one was selected
+            if (imageFile) {
+                setUploading(true);
+                imageUrl = await uploadImage(imageFile);
+                setUploading(false);
+            }
+
             await updateProduct({
                 id: productId,
                 name: formData.name,
-                image: formData.image,
+                image: imageUrl,
                 brand: formData.brand,
                 price: formData.price,
                 type: formData.type,
@@ -67,9 +143,13 @@ export default function EditProductPage() {
             });
 
             setSaved(true);
+            setExistingImageUrl(imageUrl);
+            setImageFile(null);
+            if (fileInputRef.current) fileInputRef.current.value = "";
             setTimeout(() => setSaved(false), 2000);
         } catch (error) {
             console.error(error);
+            setUploading(false);
             alert("Failed to update product. Ensure you are authorized.");
         } finally {
             setLoading(false);
@@ -135,19 +215,81 @@ export default function EditProductPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Product Image Preview */}
-                {formData.image && (
-                    <div className="bg-zinc-900/60 border border-zinc-800/60 rounded-2xl p-6 flex items-center gap-5">
-                        <div className="w-20 h-20 rounded-xl border border-zinc-700/50 overflow-hidden bg-zinc-800 flex-shrink-0">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+                {/* Image Upload Section */}
+                <div className="bg-zinc-900/60 border border-zinc-800/60 rounded-2xl p-6 space-y-4">
+                    <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Product Image</h3>
+
+                    {/* Current / Preview Image */}
+                    {imagePreview && (
+                        <div className="flex items-center gap-5">
+                            <div className="w-20 h-20 rounded-xl border border-zinc-700/50 overflow-hidden bg-zinc-800 flex-shrink-0">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                {imageFile ? (
+                                    <>
+                                        <p className="text-sm text-zinc-200 font-medium truncate">{imageFile.name}</p>
+                                        <p className="text-xs text-zinc-600 mt-0.5">
+                                            {(imageFile.size / 1024 / 1024).toFixed(2)} MB · New image selected
+                                        </p>
+                                        {uploading && (
+                                            <div className="flex items-center gap-2 mt-2">
+                                                <span className="w-3 h-3 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                                                <span className="text-xs text-amber-400 font-medium">Uploading to Cloudinary...</span>
+                                            </div>
+                                        )}
+                                    </>
+                                ) : (
+                                    <>
+                                        <p className="text-sm font-semibold text-zinc-200">{formData.name || "Untitled"}</p>
+                                        <p className="text-xs text-zinc-600 mt-0.5">{formData.brand || "No brand"}</p>
+                                    </>
+                                )}
+                            </div>
+                            {imageFile && !uploading && !loading && (
+                                <button
+                                    type="button"
+                                    onClick={removeNewImage}
+                                    className="p-2 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all cursor-pointer"
+                                    title="Remove new image"
+                                >
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            )}
                         </div>
-                        <div>
-                            <p className="text-sm font-semibold text-zinc-200">{formData.name || "Untitled"}</p>
-                            <p className="text-xs text-zinc-600 mt-0.5">{formData.brand || "No brand"}</p>
+                    )}
+
+                    {/* Upload New Image Zone */}
+                    <div
+                        onDrop={handleDrop}
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onClick={() => fileInputRef.current?.click()}
+                        className={`relative border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-all duration-200 ${dragOver
+                                ? "border-amber-500 bg-amber-500/5"
+                                : "border-zinc-700/50 hover:border-zinc-500 bg-zinc-950/30 hover:bg-zinc-900/30"
+                            }`}
+                    >
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFileChange}
+                            className="hidden"
+                        />
+                        <div className="flex items-center justify-center gap-3">
+                            <svg className={`w-5 h-5 transition-colors ${dragOver ? "text-amber-400" : "text-zinc-600"}`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                            </svg>
+                            <p className="text-sm text-zinc-400">
+                                {imageFile ? "Replace with another image" : dragOver ? "Drop image here" : "Upload a new image"}
+                            </p>
                         </div>
                     </div>
-                )}
+                </div>
 
                 {/* Main Form Fields */}
                 <div className="bg-zinc-900/60 border border-zinc-800/60 p-6 rounded-2xl space-y-5">
@@ -185,17 +327,6 @@ export default function EditProductPage() {
                                 className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-zinc-100 text-sm focus:outline-none focus:border-amber-500/50 transition-colors"
                             />
                         </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Image URL *</label>
-                        <input
-                            name="image"
-                            required
-                            value={formData.image}
-                            onChange={handleChange}
-                            className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-zinc-100 text-sm focus:outline-none focus:border-amber-500/50 transition-colors"
-                        />
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -292,13 +423,13 @@ export default function EditProductPage() {
                     </Link>
                     <button
                         type="submit"
-                        disabled={loading}
+                        disabled={loading || uploading}
                         className="flex-[2] bg-gradient-to-r from-amber-500 to-amber-600 text-zinc-950 font-bold py-3 rounded-xl hover:from-amber-400 hover:to-amber-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm shadow-lg shadow-amber-500/20 hover:shadow-amber-500/40"
                     >
                         {loading ? (
                             <span className="flex items-center justify-center gap-2">
                                 <span className="w-4 h-4 border-2 border-zinc-950 border-t-transparent rounded-full animate-spin" />
-                                Updating...
+                                {uploading ? "Uploading Image..." : "Updating..."}
                             </span>
                         ) : (
                             "Update Product"

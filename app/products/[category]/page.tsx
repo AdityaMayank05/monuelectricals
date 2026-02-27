@@ -281,8 +281,8 @@ export default function ProductsPage() {
         <div className="max-w-7xl mx-auto px-6 md:px-10 py-16 md:py-20 relative z-10">
           <div className="flex flex-col md:flex-row items-center gap-10">
             <div className="relative">
-              <div className="w-32 h-32 md:w-40 md:h-40 bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-full flex items-center justify-center p-8 shadow-2xl shadow-amber-500/10">
-                <Image src={category.coverImage} alt={category.name} width={120} height={120} className="object-contain" />
+              <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden shadow-2xl shadow-amber-500/10">
+                <Image src={category.coverImage} alt={category.name} width={160} height={160} className="w-full h-full object-cover" />
               </div>
               <div className="absolute -inset-4 bg-amber-500/5 rounded-full blur-xl"></div>
             </div>

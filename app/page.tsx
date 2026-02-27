@@ -18,14 +18,14 @@ const brandLogos = [
 ];
 
 const rotatingProducts = [
-  { name: "Havells Enticer", category: "CEILING FAN", image: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930951/monuelectricals/fans/havells-enticer-brown.png" },
-  { name: "Crompton Venti", category: "EXHAUST FAN", image: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931247/monuelectricals/ventilation-fans/crompton-venti.png" },
-  { name: "Atomberg Renesa", category: "BLDC FAN", image: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930937/monuelectricals/fans/atomberg-renesa-white.png" },
-  { name: "Sakash Chimney", category: "CHIMNEY", image: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930932/monuelectricals/chimneys/Sakashchimney.png" },
-  { name: "Bajaj Artisan", category: "DESIGNER FAN", image: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930940/monuelectricals/fans/bajaj-artisan-grey.png" },
-  { name: "Havells Venti", category: "VENTILATION", image: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931251/monuelectricals/ventilation-fans/haveels-venti.png" },
-  { name: "Orient Blanco", category: "MODERN FAN", image: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930970/monuelectricals/fans/orient-blanco-white.png" },
-  { name: "Glen Chimney", category: "CHIMNEY", image: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930925/monuelectricals/chimneys/Glen-automatic-chimney.png" },
+  { name: "Havells Enticer", category: "CEILING FAN", slug: "ceiling-fans", image: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930951/monuelectricals/fans/havells-enticer-brown.png" },
+  { name: "Crompton Venti", category: "EXHAUST FAN", slug: "ventilation", image: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931247/monuelectricals/ventilation-fans/crompton-venti.png" },
+  { name: "Atomberg Renesa", category: "BLDC FAN", slug: "ceiling-fans", image: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930937/monuelectricals/fans/atomberg-renesa-white.png" },
+  { name: "Sakash Chimney", category: "CHIMNEY", slug: "chimneys", image: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930932/monuelectricals/chimneys/Sakashchimney.png" },
+  { name: "Bajaj Artisan", category: "DESIGNER FAN", slug: "ceiling-fans", image: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930940/monuelectricals/fans/bajaj-artisan-grey.png" },
+  { name: "Havells Venti", category: "VENTILATION", slug: "ventilation", image: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931251/monuelectricals/ventilation-fans/haveels-venti.png" },
+  { name: "Orient Blanco", category: "MODERN FAN", slug: "ceiling-fans", image: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930970/monuelectricals/fans/orient-blanco-white.png" },
+  { name: "Glen Chimney", category: "CHIMNEY", slug: "chimneys", image: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930925/monuelectricals/chimneys/Glen-automatic-chimney.png" },
 ];
 
 const reviews = [
@@ -90,22 +90,41 @@ export default function HomePage() {
         }}></div>
 
         {/* Header */}
-        <header className="relative z-10 flex justify-between items-center px-6 md:px-12 lg:px-20 py-6">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-amber-500 flex items-center justify-center">
-              <span className="text-zinc-950 font-black text-lg">M</span>
+        <header className="relative z-10 flex items-center justify-between px-6 md:px-12 lg:px-20 py-6">
+
+          {/* Left – Est. badge */}
+          <div className="flex items-center">
+            <span className="text-xs text-zinc-500 tracking-widest font-bold hidden md:block">EST. 2005</span>
+            {/* Mobile: subtle placeholder for balance */}
+            <span className="text-xs text-zinc-700 tracking-widest font-bold md:hidden">ME</span>
+          </div>
+
+          {/* Center – Animated Premium Logo */}
+          <div className="absolute left-1/2 -translate-x-1/2 animate-logo-drop-in pt-5">
+            <div className="logo-container">
+              <span className="logo-monu">MONU</span>
+              <span className="logo-electricals">ELECTRICALS</span>
             </div>
-            <span className="text-xl font-black tracking-tighter">
-              MONU<span className="text-amber-500">ELECTRICALS</span>
-            </span>
           </div>
-          <div className="flex items-center gap-6">
-            <span className="text-xs text-zinc-500 tracking-widest hidden md:block">EST. 2005</span>
-            <a href="#contact" className="border border-amber-500 text-amber-500 px-5 py-2.5 text-sm font-bold hover:bg-amber-500 hover:text-zinc-950 transition-all duration-200 cursor-pointer">
-              CONTACT US
-            </a>
-          </div>
+
+          {/* Right – Phone icon */}
+          <a
+            href="tel:9213684115"
+            className="text-amber-500/80 hover:text-amber-400 transition-all duration-200 cursor-pointer focus:outline-none hover:drop-shadow-[0_0_8px_rgba(245,158,11,0.7)]"
+            title="Call us: 9213684115"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              className="w-6 h-6"
+            >
+              <path fillRule="evenodd" d="M1.5 4.5a3 3 0 013-3h1.372c.86 0 1.61.586 1.819 1.42l1.105 4.423a1.875 1.875 0 01-.694 1.955l-1.293.97c-.135.101-.164.249-.126.352a11.285 11.285 0 006.697 6.697c.103.038.25.009.352-.126l.97-1.293a1.875 1.875 0 011.955-.694l4.423 1.105c.834.209 1.42.959 1.42 1.82V19.5a3 3 0 01-3 3h-2.25C8.552 22.5 1.5 15.448 1.5 6.75V4.5z" clipRule="evenodd" />
+            </svg>
+          </a>
+
         </header>
+
 
         {/* Main Hero Grid */}
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 min-h-[calc(100vh-100px)] px-6 md:px-12 lg:px-20">
@@ -124,26 +143,35 @@ export default function HomePage() {
               >
                 {rotatingProducts.map((product, i) => {
                   const angle = i * 45;
+                  // Counter-rotation: undo the parent container's rotation AND the item's own angle
+                  // Parent rotates by -(activeProductIndex*45), item wrapper rotates by +angle
+                  // So to keep upright: correction = activeProductIndex*45 - angle
+                  const counterRotation = activeProductIndex * 45 - angle;
                   return (
                     <div
                       key={i}
                       className="absolute left-1/2 top-1/2"
                       style={{ transform: `rotate(${angle}deg) translateY(-130px)` }}
                     >
-                      <div
-                        className={`w-12 h-12 md:w-16 md:h-16 rounded-full bg-zinc-900 border-2 flex items-center justify-center p-2 -ml-6 -mt-6 md:-ml-8 md:-mt-8 transition-all duration-500 ${i === activeProductIndex ? 'border-amber-500 scale-110 bg-zinc-800' : 'border-zinc-700'
+                      <Link
+                        href={`/products/${product.slug}`}
+                        className={`block w-12 h-12 md:w-16 md:h-16 rounded-full border-2 overflow-hidden -ml-6 -mt-6 md:-ml-8 md:-mt-8 transition-all duration-500 cursor-pointer hover:scale-125 ${i === activeProductIndex ? 'border-amber-500 scale-110' : 'border-zinc-700 bg-zinc-900'
                           }`}
-                        style={{ transform: `rotate(${activeProductIndex * 45}deg)` }}
+                        style={{ transform: `rotate(${counterRotation}deg)` }}
+                        title={product.name}
                       >
-                        <Image src={product.image} alt={product.name} width={40} height={40} className="object-contain" />
-                      </div>
+                        <Image src={product.image} alt={product.name} width={64} height={64} className="w-full h-full object-cover" />
+                      </Link>
                     </div>
                   );
                 })}
               </div>
 
               {/* Center Display */}
-              <div className="absolute inset-20 md:inset-24 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center">
+              <Link
+                href={`/products/${rotatingProducts[activeProductIndex].slug}`}
+                className="absolute inset-20 md:inset-24 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center cursor-pointer hover:border-amber-500/60 transition-colors duration-300"
+              >
                 <div className="text-center p-4">
                   <div className="relative w-24 h-24 md:w-32 md:h-32 mx-auto">
                     {rotatingProducts.map((product, i) => (
@@ -159,7 +187,7 @@ export default function HomePage() {
                   <p className="text-xs text-amber-500 font-bold tracking-wider mt-2">{rotatingProducts[activeProductIndex].category}</p>
                   <p className="font-black text-sm text-zinc-300 mt-1">{rotatingProducts[activeProductIndex].name}</p>
                 </div>
-              </div>
+              </Link>
 
               {/* Progress indicator */}
               <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 flex gap-1.5">

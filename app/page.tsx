@@ -172,20 +172,16 @@ export default function HomePage() {
                 href={`/products/${rotatingProducts[activeProductIndex].slug}`}
                 className="absolute inset-20 md:inset-24 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center cursor-pointer hover:border-amber-500/60 transition-colors duration-300"
               >
-                <div className="text-center p-4">
-                  <div className="relative w-24 h-24 md:w-32 md:h-32 mx-auto">
-                    {rotatingProducts.map((product, i) => (
-                      <div
-                        key={i}
-                        className={`absolute inset-0 transition-all duration-500 ${i === activeProductIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
-                          }`}
-                      >
-                        <Image src={product.image} alt={product.name} fill className="object-contain" />
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-xs text-amber-500 font-bold tracking-wider mt-2">{rotatingProducts[activeProductIndex].category}</p>
-                  <p className="font-black text-sm text-zinc-300 mt-1">{rotatingProducts[activeProductIndex].name}</p>
+                <div className="relative w-full h-full rounded-full overflow-hidden">
+                  {rotatingProducts.map((product, i) => (
+                    <div
+                      key={i}
+                      className={`absolute inset-0 transition-all duration-500 ${i === activeProductIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
+                        }`}
+                    >
+                      <Image src={product.image} alt={product.name} fill className="object-cover" />
+                    </div>
+                  ))}
                 </div>
               </Link>
 

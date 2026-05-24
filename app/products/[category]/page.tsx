@@ -244,9 +244,6 @@ export default function ProductsPage() {
         <div className="max-w-7xl mx-auto flex justify-between items-center px-6 md:px-10 py-4">
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-3 cursor-pointer">
-              <div className="w-9 h-9 bg-amber-500 flex items-center justify-center">
-                <span className="text-zinc-950 font-black">M</span>
-              </div>
               <span className="text-lg font-black tracking-tighter">
                 MONU<span className="text-amber-500">ELECTRICALS</span>
               </span>
@@ -447,9 +444,6 @@ export default function ProductsPage() {
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
           <div className="md:col-span-2">
             <Link href="/" className="flex items-center gap-3 cursor-pointer">
-              <div className="w-9 h-9 bg-amber-500 flex items-center justify-center">
-                <span className="text-zinc-950 font-black">M</span>
-              </div>
               <span className="text-lg font-black tracking-tighter">
                 MONU<span className="text-amber-500">ELECTRICALS</span>
               </span>

@@ -20,11 +20,11 @@ const brandLogos = [
 const rotatingProducts = [
   { name: "Havells Enticer", category: "CEILING FAN", slug: "ceiling-fans", image: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930951/monuelectricals/fans/havells-enticer-brown.png" },
   { name: "Crompton Venti", category: "EXHAUST FAN", slug: "ventilation", image: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931247/monuelectricals/ventilation-fans/crompton-venti.png" },
-  { name: "Atomberg Renesa", category: "BLDC FAN", slug: "ceiling-fans", image: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930937/monuelectricals/fans/atomberg-renesa-white.png" },
+  { name: "Surya Neo Maxx", category: "LED BULB", slug: "lights", image: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930996/monuelectricals/lights/bulbs/surya-neo-maxx.png" },
   { name: "Sakash Chimney", category: "CHIMNEY", slug: "chimneys", image: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930932/monuelectricals/chimneys/Sakashchimney.png" },
   { name: "Bajaj Artisan", category: "DESIGNER FAN", slug: "ceiling-fans", image: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930940/monuelectricals/fans/bajaj-artisan-grey.png" },
-  { name: "Havells Venti", category: "VENTILATION", slug: "ventilation", image: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931251/monuelectricals/ventilation-fans/haveels-venti.png" },
-  { name: "Orient Blanco", category: "MODERN FAN", slug: "ceiling-fans", image: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930970/monuelectricals/fans/orient-blanco-white.png" },
+  { name: "Fan Regulator", category: "SWITCHGEAR", slug: "switchgear", image: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931172/monuelectricals/switchgear/havells-fanregulator2m-black.png" },
+  { name: "Havells Wire Red", category: "WIRES", slug: "wires", image: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931267/monuelectricals/wires/Havells-wire-red.png" },
   { name: "Glen Chimney", category: "CHIMNEY", slug: "chimneys", image: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930925/monuelectricals/chimneys/Glen-automatic-chimney.png" },
 ];
 
@@ -101,10 +101,15 @@ export default function HomePage() {
 
           {/* Center – Animated Premium Logo */}
           <div className="absolute left-1/2 -translate-x-1/2 animate-logo-drop-in pt-5">
-            <div className="logo-container">
-              <span className="logo-monu">MONU</span>
-              <span className="logo-electricals">ELECTRICALS</span>
-            </div>
+            <Link href="/">
+              <Image
+                src="https://res.cloudinary.com/dvza6iqax/image/upload/v1771933210/monuelectricals/logos/monu-electricals-logo.png"
+                alt="Monu Electricals"
+                width={180}
+                height={54}
+                className="object-contain brightness-0 invert opacity-90 hover:opacity-100 transition-opacity"
+              />
+            </Link>
           </div>
 
           {/* Right – Phone icon */}
@@ -131,71 +136,70 @@ export default function HomePage() {
           {/* Left - Rotating Clock */}
           <div className="flex items-center justify-center py-12 order-2 lg:order-1">
             <div className="relative w-[300px] h-[300px] md:w-[400px] md:h-[400px]">
-              {/* Outer rings */}
-              <div className="absolute inset-0 rounded-full border border-zinc-800"></div>
-              <div className="absolute inset-6 rounded-full border border-zinc-800/50"></div>
-              <div className="absolute inset-12 rounded-full border border-dashed border-amber-500/30"></div>
+                {/* Outer rings */}
+                <div className="absolute inset-0 rounded-full border border-zinc-800"></div>
+                <div className="absolute inset-6 rounded-full border border-zinc-800/50"></div>
+                <div className="absolute inset-12 rounded-full border border-dashed border-amber-500/30"></div>
 
-              {/* Rotating thumbnails */}
-              <div
-                className="absolute inset-0 transition-transform duration-1000 ease-out"
-                style={{ transform: `rotate(-${activeProductIndex * 45}deg)` }}
-              >
-                {rotatingProducts.map((product, i) => {
-                  const angle = i * 45;
-                  // Counter-rotation: undo the parent container's rotation AND the item's own angle
-                  // Parent rotates by -(activeProductIndex*45), item wrapper rotates by +angle
-                  // So to keep upright: correction = activeProductIndex*45 - angle
-                  const counterRotation = activeProductIndex * 45 - angle;
-                  return (
-                    <div
-                      key={i}
-                      className="absolute left-1/2 top-1/2"
-                      style={{ transform: `rotate(${angle}deg) translateY(-130px)` }}
-                    >
-                      <Link
-                        href={`/products/${product.slug}`}
-                        className={`block w-12 h-12 md:w-16 md:h-16 rounded-full border-2 overflow-hidden -ml-6 -mt-6 md:-ml-8 md:-mt-8 transition-all duration-500 cursor-pointer hover:scale-125 ${i === activeProductIndex ? 'border-amber-500 scale-110' : 'border-zinc-700 bg-zinc-900'
-                          }`}
-                        style={{ transform: `rotate(${counterRotation}deg)` }}
-                        title={product.name}
+                {/* Rotating thumbnails */}
+                <div
+                  className="absolute inset-0 transition-transform duration-1000 ease-out"
+                  style={{ transform: `rotate(-${activeProductIndex * 45}deg)` }}
+                >
+                  {rotatingProducts.map((product, i) => {
+                    const angle = i * 45;
+                    const counterRotation = activeProductIndex * 45 - angle;
+                    return (
+                      <div
+                        key={i}
+                        className="absolute inset-0 origin-center"
+                        style={{ transform: `rotate(${angle}deg)` }}
                       >
-                        <Image src={product.image} alt={product.name} width={64} height={64} className="w-full h-full object-cover" />
-                      </Link>
-                    </div>
-                  );
-                })}
-              </div>
+                        <div className="absolute top-12 left-1/2 -ml-6 -mt-6 md:-ml-8 md:-mt-8">
+                          <Link
+                            href={`/products/${product.slug}`}
+                            className={`block w-12 h-12 md:w-16 md:h-16 rounded-full border-2 overflow-hidden transition-all duration-500 cursor-pointer hover:scale-125 ${i === activeProductIndex ? 'border-amber-500 scale-110' : 'border-zinc-700 bg-zinc-900'
+                              }`}
+                            style={{ transform: `rotate(${counterRotation}deg)` }}
+                            title={product.name}
+                          >
+                            <Image src={product.image} alt={product.name} width={64} height={64} className="w-full h-full object-cover" />
+                          </Link>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
 
-              {/* Center Display */}
-              <Link
-                href={`/products/${rotatingProducts[activeProductIndex].slug}`}
-                className="absolute inset-20 md:inset-24 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center cursor-pointer hover:border-amber-500/60 transition-colors duration-300"
-              >
-                <div className="relative w-full h-full rounded-full overflow-hidden">
-                  {rotatingProducts.map((product, i) => (
+                {/* Center Display */}
+                <Link
+                  href={`/products/${rotatingProducts[activeProductIndex].slug}`}
+                  className="absolute inset-20 md:inset-24 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center cursor-pointer hover:border-amber-500/60 transition-colors duration-300"
+                >
+                  <div className="relative w-full h-full rounded-full overflow-hidden">
+                    {rotatingProducts.map((product, i) => (
+                      <div
+                        key={i}
+                        className={`absolute inset-0 transition-all duration-500 ${i === activeProductIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
+                          }`}
+                      >
+                        <Image src={product.image} alt={product.name} fill className="object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                </Link>
+
+                {/* Progress indicator */}
+                <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 flex gap-1.5">
+                  {rotatingProducts.map((_, i) => (
                     <div
                       key={i}
-                      className={`absolute inset-0 transition-all duration-500 ${i === activeProductIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
+                      className={`h-1 transition-all duration-300 ${i === activeProductIndex ? 'w-6 bg-amber-500' : 'w-1.5 bg-zinc-700'
                         }`}
-                    >
-                      <Image src={product.image} alt={product.name} fill className="object-cover" />
-                    </div>
+                    ></div>
                   ))}
                 </div>
-              </Link>
-
-              {/* Progress indicator */}
-              <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 flex gap-1.5">
-                {rotatingProducts.map((_, i) => (
-                  <div
-                    key={i}
-                    className={`h-1 transition-all duration-300 ${i === activeProductIndex ? 'w-6 bg-amber-500' : 'w-1.5 bg-zinc-700'
-                      }`}
-                  ></div>
-                ))}
               </div>
-            </div>
           </div>
 
           {/* Right - Text Content */}
@@ -370,14 +374,15 @@ export default function HomePage() {
           {/* Brand + Social */}
           <div className="md:col-span-2">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-amber-500 flex items-center justify-center">
-                <span className="text-zinc-950 font-black text-lg">M</span>
-              </div>
-              <span className="text-xl font-black tracking-tighter">
-                MONU<span className="text-amber-500">ELECTRICALS</span>
-              </span>
+              <Image
+                src="https://res.cloudinary.com/dvza6iqax/image/upload/v1771933210/monuelectricals/logos/monu-electricals-logo.png"
+                alt="Monu Electricals"
+                width={200}
+                height={60}
+                className="object-contain brightness-0 invert"
+              />
             </div>
-            <p className="text-zinc-500 mt-4">Premium electrical products since 2005.</p>
+            <p className="text-zinc-500 mt-4">Premium electrical products since 1995.</p>
             <div className="flex gap-3 mt-6">
               {/* Facebook */}
               <a

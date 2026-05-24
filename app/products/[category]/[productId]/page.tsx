@@ -142,10 +142,7 @@ export default function ProductDetailPage() {
                 <div className="max-w-7xl mx-auto flex justify-between items-center px-6 md:px-10 py-4">
                     <div className="flex items-center gap-6">
                         <Link href="/" className="flex items-center gap-3 cursor-pointer">
-                            <div className="w-9 h-9 bg-amber-500 flex items-center justify-center">
-                                <span className="text-zinc-950 font-black">M</span>
-                            </div>
-                            <span className="text-lg font-black tracking-tighter hidden sm:block">
+                            <span className="text-lg font-black tracking-tighter">
                                 MONU<span className="text-amber-500">ELECTRICALS</span>
                             </span>
                         </Link>
@@ -248,11 +245,17 @@ export default function ProductDetailPage() {
 
                         {/* Price */}
                         {product.price && (
-                            <div className="mt-6 flex items-baseline gap-3">
-                                <span className="text-3xl md:text-4xl font-black text-amber-400">
-                                    {product.price}
-                                </span>
-                                <span className="text-zinc-600 text-sm">per unit</span>
+                            <div className="mt-6">
+                                <div className="flex items-center gap-3 flex-wrap">
+                                    <span className="text-3xl md:text-4xl font-black text-zinc-500 line-through decoration-2">
+                                        ₹{product.price.toString().replace(/[^0-9.]/g, '')}
+                                    </span>
+                                    <span className="text-zinc-500 font-semibold self-end pb-1">MRP</span>
+                                    <div className="bg-red-500 text-white px-3 py-1 bg-gradient-to-r from-red-500 to-red-600 rounded-full font-bold text-sm tracking-wide shadow-sm ml-2">
+                                        FOR BEST PRICE CONTACT STORE
+                                    </div>
+                                </div>
+                                <p className="text-zinc-600 text-sm mt-2">MRP incl. of all taxes</p>
                             </div>
                         )}
 
@@ -437,9 +440,6 @@ export default function ProductDetailPage() {
                 <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
                     <div className="md:col-span-2">
                         <Link href="/" className="flex items-center gap-3 cursor-pointer">
-                            <div className="w-9 h-9 bg-amber-500 flex items-center justify-center">
-                                <span className="text-zinc-950 font-black">M</span>
-                            </div>
                             <span className="text-lg font-black tracking-tighter">
                                 MONU<span className="text-amber-500">ELECTRICALS</span>
                             </span>

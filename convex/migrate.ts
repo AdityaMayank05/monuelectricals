@@ -118,11 +118,12 @@ export const migrateToCloudinary = internalMutation({
 
         // Migrate products
         const products = await ctx.db.query("products").collect();
-        for (const product of products) {
+        for (const p of products) {
+            const product = p as any;
             if (product.image && product.image.startsWith("/assets/")) {
                 const newUrl = URL_MAP[product.image];
                 if (newUrl) {
-                    await ctx.db.patch(product._id, { image: newUrl });
+                    await ctx.db.patch(product._id, { baseImage: newUrl } as any);
                     productsUpdated++;
                 } else {
                     unmapped.push(product.image);

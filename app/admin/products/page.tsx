@@ -17,7 +17,7 @@ export default function AdminProductsPage() {
     const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
 
     const handleDelete = async (id: Id<"products">) => {
-        if (confirm("Are you sure you want to delete this product?")) {
+        if (confirm("Are you sure you want to delete this product and all its variants?")) {
             try {
                 await deleteProduct({ id });
             } catch (error) {
@@ -45,7 +45,8 @@ export default function AdminProductsPage() {
         const matchesSearch =
             !search ||
             p.name.toLowerCase().includes(search.toLowerCase()) ||
-            p.brand.toLowerCase().includes(search.toLowerCase());
+            p.brand.toLowerCase().includes(search.toLowerCase()) ||
+            (p.variants || []).some((v: any) => v.color?.toLowerCase().includes(search.toLowerCase()));
         const matchesCategory =
             activeCategory === "all" || p.categoryId === activeCategory;
         return matchesSearch && matchesCategory;
@@ -60,6 +61,8 @@ export default function AdminProductsPage() {
         .filter((g) => g.products.length > 0) ?? [];
 
     const totalFiltered = filtered?.length ?? 0;
+    const totalVariants = filtered?.reduce((acc, p) => acc + (p.variants || []).length, 0) ?? 0;
+    const allVariantsCount = products?.reduce((acc, p) => acc + (p.variants || []).length, 0) ?? 0;
 
     return (
         <div className="space-y-6">
@@ -68,8 +71,8 @@ export default function AdminProductsPage() {
                 <div>
                     <h1 className="text-2xl font-bold text-zinc-100">Products</h1>
                     <p className="text-sm text-zinc-500 mt-1">
-                        {products?.length ?? 0} total products
-                        {activeCategory !== "all" && ` · ${totalFiltered} shown`}
+                        {products?.length ?? 0} total products ({allVariantsCount} variants)
+                        {activeCategory !== "all" && ` · ${totalFiltered} shown (${totalVariants} variants)`}
                     </p>
                 </div>
                 <Link
@@ -109,7 +112,7 @@ export default function AdminProductsPage() {
                                 {cat.name}
                                 <span className={`ml-1.5 text-[10px] ${activeCategory === cat._id ? "text-zinc-950/60" : "text-zinc-600"}`}>
                                     {count}
-                                </span>
+                               </span>
                             </button>
                         );
                     })}
@@ -123,7 +126,7 @@ export default function AdminProductsPage() {
                 </svg>
                 <input
                     type="text"
-                    placeholder="Search by name or brand..."
+                    placeholder="Search by name, brand, or color..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="w-full bg-zinc-900 border border-zinc-800/60 rounded-xl pl-11 pr-4 py-3 text-sm text-zinc-100 focus:outline-none focus:border-amber-500/50 transition-colors placeholder:text-zinc-700"
@@ -158,7 +161,9 @@ export default function AdminProductsPage() {
                 <div className="space-y-4">
                     {grouped.map((group) => {
                         const isCollapsed = collapsedCategories.has(group._id);
-                        const outOfStockCount = group.products.filter((p) => p.outOfStock).length;
+                        const groupOutOfStockCount = group.products.reduce(
+                            (acc, p) => acc + (p.variants || []).filter((v: any) => v.outOfStock).length, 0
+                        );
 
                         return (
                             <div
@@ -192,9 +197,9 @@ export default function AdminProductsPage() {
                                     </div>
 
                                     <div className="flex items-center gap-3">
-                                        {outOfStockCount > 0 && (
+                                        {groupOutOfStockCount > 0 && (
                                             <span className="text-[10px] font-bold text-red-400 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded-full">
-                                                {outOfStockCount} out of stock
+                                                {groupOutOfStockCount} variant{groupOutOfStockCount !== 1 ? 's' : ''} out of stock
                                             </span>
                                         )}
                                         <span className="text-xs font-semibold text-zinc-500 bg-zinc-800/60 px-2.5 py-1 rounded-lg tabular-nums">
@@ -212,13 +217,15 @@ export default function AdminProductsPage() {
                                                     <th className="px-6 py-3 text-[10px] font-bold text-zinc-600 uppercase tracking-widest w-14"></th>
                                                     <th className="px-4 py-3 text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Product</th>
                                                     <th className="px-4 py-3 text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Brand</th>
-                                                    <th className="px-4 py-3 text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Price</th>
-                                                    <th className="px-4 py-3 text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Status</th>
+                                                    <th className="px-4 py-3 text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Base Price</th>
+                                                    <th className="px-4 py-3 text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Variants</th>
                                                     <th className="px-6 py-3 text-[10px] font-bold text-zinc-600 uppercase tracking-widest text-right">Actions</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-zinc-800/25">
-                                                {group.products.map((product) => (
+                                                {group.products.map((product) => {
+                                                    const outOfStockVariants = (product.variants || []).filter((v: any) => v.outOfStock).length;
+                                                    return (
                                                     <tr
                                                         key={product._id}
                                                         onClick={() => router.push(`/admin/products/${product._id}`)}
@@ -227,35 +234,37 @@ export default function AdminProductsPage() {
                                                         <td className="px-6 py-3">
                                                             <div className="w-10 h-10 bg-zinc-800 rounded-lg overflow-hidden border border-zinc-700/30">
                                                                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                                <img src={product.image} alt={product.name} className="object-cover w-full h-full" />
+                                                                <img src={product.baseImage} alt={product.name} className="object-cover w-full h-full" />
                                                             </div>
                                                         </td>
                                                         <td className="px-4 py-3">
-                                                            <div className="flex items-center gap-2">
-                                                                <span className={`font-medium ${product.outOfStock ? "text-zinc-500 line-through" : "text-zinc-200"}`}>
+                                                            <div className="flex flex-col gap-1">
+                                                                <span className="font-medium text-zinc-200">
                                                                     {product.name}
                                                                 </span>
-                                                                {product.color && (
-                                                                    <span className="text-[10px] text-zinc-600 bg-zinc-800 px-1.5 py-0.5 rounded">
-                                                                        {product.color}
-                                                                    </span>
-                                                                )}
+                                                                <div className="flex flex-wrap gap-1">
+                                                                    {(product.variants || []).map((variant: any) => (
+                                                                        <span key={variant._id} className={`text-[9px] px-1.5 py-0.5 rounded ${variant.outOfStock ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-zinc-800 text-zinc-400'}`}>
+                                                                            {variant.color || variant.size || 'Variant'}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
                                                             </div>
                                                         </td>
                                                         <td className="px-4 py-3 text-zinc-400">{product.brand}</td>
-                                                        <td className="px-4 py-3 font-mono text-amber-500/80 text-xs">{product.price || "—"}</td>
+                                                        <td className="px-4 py-3 font-mono text-amber-500/80 text-xs">{product.basePrice || "—"}</td>
                                                         <td className="px-4 py-3">
-                                                            {product.outOfStock ? (
-                                                                <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-red-400 bg-red-500/10 border border-red-500/20 px-2.5 py-1 rounded-full">
-                                                                    <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
-                                                                    Out of Stock
+                                                            <div className="flex flex-col gap-1 items-start">
+                                                                <span className="text-[10px] font-semibold text-zinc-400 bg-zinc-800/80 px-2 py-0.5 rounded-md">
+                                                                    {(product.variants || []).length} variant{(product.variants || []).length !== 1 ? 's' : ''}
                                                                 </span>
-                                                            ) : (
-                                                                <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">
-                                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                                                                    In Stock
-                                                                </span>
-                                                            )}
+                                                                {outOfStockVariants > 0 && (
+                                                                    <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-red-400 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded-full">
+                                                                        <span className="w-1 h-1 rounded-full bg-red-400 animate-pulse" />
+                                                                        {outOfStockVariants} OOS
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                         </td>
                                                         <td className="px-6 py-3 text-right">
                                                             <button
@@ -266,7 +275,7 @@ export default function AdminProductsPage() {
                                                             </button>
                                                         </td>
                                                     </tr>
-                                                ))}
+                                                )})}
                                             </tbody>
                                         </table>
                                     </div>

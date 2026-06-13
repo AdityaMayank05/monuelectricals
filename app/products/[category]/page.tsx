@@ -36,25 +36,41 @@ export default function ProductsPage() {
 
   const colors = useMemo(() => {
     if (!products) return [];
-    return [...new Set(products.map((p) => p.color).filter(Boolean) as string[])].sort();
+    const allColors = products.flatMap(p => (p.variants || []).map(v => v.color).filter(Boolean) as string[]);
+    return [...new Set(allColors)].sort();
   }, [products]);
 
   const filteredProducts = useMemo(() => {
     if (!products) return [];
-    return products.filter((p) => {
+    const filtered = products.filter((p) => {
       if (selectedBrands.length > 0 && !selectedBrands.includes(p.brand)) return false;
       if (selectedTypes.length > 0 && p.type && !selectedTypes.includes(p.type)) return false;
-      if (selectedColors.length > 0 && p.color && !selectedColors.includes(p.color)) return false;
+      
+      const productColors = (p.variants || []).map(v => v.color).filter(Boolean) as string[];
+      if (selectedColors.length > 0 && !productColors.some(c => selectedColors.includes(c))) return false;
+      
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
         return (
           p.name.toLowerCase().includes(q) ||
           p.brand.toLowerCase().includes(q) ||
           (p.type && p.type.toLowerCase().includes(q)) ||
-          (p.color && p.color.toLowerCase().includes(q))
+          productColors.some(c => c.toLowerCase().includes(q))
         );
       }
       return true;
+    });
+
+    return filtered.sort((a, b) => {
+      const aOutOfStockCount = (a.variants || []).filter((v: any) => v.outOfStock).length;
+      const aAllOutOfStock = (a.variants || []).length > 0 && aOutOfStockCount === a.variants!.length;
+      
+      const bOutOfStockCount = (b.variants || []).filter((v: any) => v.outOfStock).length;
+      const bAllOutOfStock = (b.variants || []).length > 0 && bOutOfStockCount === b.variants!.length;
+
+      if (aAllOutOfStock && !bAllOutOfStock) return 1;
+      if (!aAllOutOfStock && bAllOutOfStock) return -1;
+      return 0;
     });
   }, [products, selectedBrands, selectedTypes, selectedColors, searchQuery]);
 
@@ -384,55 +400,79 @@ export default function ProductsPage() {
             {/* Products Grid */}
             {products && (
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-                {filteredProducts.map((product) => (
-                  <Link
-                    key={product._id}
-                    href={`/products/${slug}/${product._id}`}
-                    className={`group cursor-pointer bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(245,158,11,0.08)] hover:border-amber-500/30 block ${product.outOfStock ? "opacity-75" : ""}`}
-                  >
-                    {/* Product Image */}
-                    <div className="relative bg-zinc-900 aspect-square flex items-center justify-center p-6 md:p-8">
-                      <Image
-                        src={product.image}
-                        alt={`${product.brand} ${product.name}`}
-                        width={200}
-                        height={200}
-                        className={`object-contain w-full h-full transition-transform duration-300 group-hover:scale-110 ${product.outOfStock ? "grayscale-[40%]" : ""}`}
-                      />
-                      {/* Brand badge */}
-                      <span className="absolute top-3 left-3 bg-zinc-800/90 text-zinc-400 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded">
-                        {product.brand}
-                      </span>
-                      {/* Out of Stock badge */}
-                      {product.outOfStock && (
-                        <span className="absolute top-3 right-3 bg-red-500/90 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-lg">
-                          Out of Stock
-                        </span>
-                      )}
-                    </div>
+                {filteredProducts.map((product) => {
+                  const outOfStockCount = (product.variants || []).filter((v) => v.outOfStock).length;
+                  const allOutOfStock = (product.variants || []).length > 0 && outOfStockCount === product.variants.length;
+                  const uniqueColors = [...new Set((product.variants || []).map((v) => v.color).filter(Boolean) as string[])];
 
-                    {/* Product Info */}
-                    <div className="px-4 py-4 border-t border-zinc-800/50">
-                      <h3 className={`font-bold text-sm transition-colors duration-200 truncate ${product.outOfStock ? "text-zinc-500" : "text-zinc-200 group-hover:text-amber-400"}`}>
-                        {product.brand} {product.name}
-                      </h3>
-                      <div className="flex items-center gap-2 mt-1.5">
-                        {product.type && (
-                          <span className="text-[11px] text-zinc-500">{product.type}</span>
+                  return (
+                    <Link
+                      key={product._id}
+                      href={`/products/${slug}/${product._id}`}
+                      className={`group cursor-pointer bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(245,158,11,0.08)] hover:border-amber-500/30 block ${allOutOfStock ? "opacity-75" : ""}`}
+                    >
+                      {/* Product Image */}
+                      <div className="relative bg-zinc-900 aspect-square flex items-center justify-center p-6 md:p-8">
+                        {product.baseImage ? (
+                          <Image
+                            src={product.baseImage}
+                            alt={`${product.brand} ${product.name}`}
+                            width={200}
+                            height={200}
+                            className={`object-contain w-full h-full transition-transform duration-300 group-hover:scale-110 ${allOutOfStock ? "grayscale-[40%]" : ""}`}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center text-zinc-700 opacity-50">
+                            <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                            <span className="text-xs font-bold uppercase tracking-wider">No Image</span>
+                          </div>
                         )}
-                        {product.type && product.color && (
-                          <span className="text-zinc-700 text-[11px]">/</span>
-                        )}
-                        {product.color && (
-                          <span className="text-[11px] text-zinc-500">{product.color}</span>
+                        {/* Brand badge */}
+                        <span className="absolute top-3 left-3 bg-zinc-800/90 text-zinc-400 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded">
+                          {product.brand}
+                        </span>
+                        {/* Out of Stock badge */}
+                        {allOutOfStock && (
+                          <span className="absolute top-3 right-3 bg-red-500/90 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-lg">
+                            Out of Stock
+                          </span>
                         )}
                       </div>
-                      {product.price && (
-                        <p className={`font-bold text-sm mt-2 ${product.outOfStock ? "text-zinc-600 line-through" : "text-amber-400"}`}>{product.price}</p>
-                      )}
-                    </div>
-                  </Link>
-                ))}
+
+                      {/* Product Info */}
+                      <div className="px-4 py-4 border-t border-zinc-800/50">
+                        <h3 className={`font-bold text-sm transition-colors duration-200 truncate ${allOutOfStock ? "text-zinc-500" : "text-zinc-200 group-hover:text-amber-400"}`}>
+                          {product.brand} {product.name}
+                        </h3>
+                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                          {product.type && (
+                            <span className="text-[11px] text-zinc-500">{product.type}</span>
+                          )}
+                          {product.type && uniqueColors.length > 0 && (
+                            <span className="text-zinc-700 text-[11px]">/</span>
+                          )}
+                          {uniqueColors.length > 0 && (
+                            <span className="text-[11px] text-amber-500 font-medium">
+                              {uniqueColors.length} Color{uniqueColors.length > 1 ? "s" : ""}
+                            </span>
+                          )}
+                        </div>
+                        {(product.discountedPrice || product.basePrice) && (
+                          <div className="flex items-center gap-2 mt-2">
+                            {product.discountedPrice && (
+                              <span className={`font-bold text-sm ${allOutOfStock ? "text-zinc-600 line-through" : "text-amber-400"}`}>₹{product.discountedPrice.toString().replace(/[^0-9.]/g, '')}</span>
+                            )}
+                            {product.basePrice && (
+                              <span className={`${product.discountedPrice ? "text-xs font-semibold text-zinc-500 line-through" : `font-bold text-sm ${allOutOfStock ? "text-zinc-600 line-through" : "text-amber-400"}`}`}>
+                                {product.discountedPrice ? `₹${product.basePrice.toString().replace(/[^0-9.]/g, '')}` : product.basePrice}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </main>

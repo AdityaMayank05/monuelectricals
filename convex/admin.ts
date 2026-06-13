@@ -16,12 +16,16 @@ export const getDashboardStats = query({
     handler: async (ctx) => {
         const categories = await ctx.db.query("categories").collect();
         const products = await ctx.db.query("products").collect();
+        const variants = await ctx.db.query("productVariants").collect();
 
         // Count products per category
         const categoryStats = categories
             .sort((a, b) => a.displayOrder - b.displayOrder)
             .map((cat) => {
                 const catProducts = products.filter((p) => p.categoryId === cat._id);
+                const catVariants = variants.filter((v) =>
+                    catProducts.some((p) => p._id === v.productId)
+                );
                 const brands = [...new Set(catProducts.map((p) => p.brand))];
                 return {
                     _id: cat._id,
@@ -30,6 +34,7 @@ export const getDashboardStats = query({
                     coverImage: cat.coverImage,
                     displayOrder: cat.displayOrder,
                     productCount: catProducts.length,
+                    variantCount: catVariants.length,
                     brandCount: brands.length,
                     topBrands: brands.slice(0, 3),
                 };
@@ -37,6 +42,7 @@ export const getDashboardStats = query({
 
         return {
             totalProducts: products.length,
+            totalVariants: variants.length,
             totalCategories: categories.length,
             totalBrands: [...new Set(products.map((p) => p.brand))].length,
             categoryStats,
@@ -44,27 +50,50 @@ export const getDashboardStats = query({
     },
 });
 
-// ─── Product Mutations ─────────────────────────────────────────────
+// ─── Product Mutations (Parent) ────────────────────────────────────
 export const createProduct = mutation({
     args: {
         name: v.string(),
         categoryId: v.id("categories"),
-        price: v.optional(v.string()),
-        image: v.string(),
+        basePrice: v.optional(v.string()),
+        discountedPrice: v.optional(v.string()),
+        discountBadge: v.optional(v.string()),
+        baseImage: v.string(),
         brand: v.string(),
         type: v.optional(v.string()),
-        color: v.optional(v.string()),
-        size: v.optional(v.string()),
         subCategory: v.optional(v.string()),
         brandLine: v.optional(v.string()),
         shape: v.optional(v.string()),
         motor: v.optional(v.string()),
         energy: v.optional(v.string()),
-        outOfStock: v.optional(v.boolean()),
+        // Initial variants to create alongside the parent
+        variants: v.array(
+            v.object({
+                color: v.optional(v.string()),
+                size: v.optional(v.string()),
+                image: v.string(),
+                price: v.optional(v.string()),
+                discountedPrice: v.optional(v.string()),
+                discountBadge: v.optional(v.string()),
+                outOfStock: v.optional(v.boolean()),
+            })
+        ),
     },
     handler: async (ctx, args) => {
         await checkAdmin(ctx);
-        return await ctx.db.insert("products", args);
+        const { variants, ...productData } = args;
+
+        const productId = await ctx.db.insert("products", productData);
+
+        // Create all variants
+        for (const variant of variants) {
+            await ctx.db.insert("productVariants", {
+                productId,
+                ...variant,
+            });
+        }
+
+        return productId;
     },
 });
 
@@ -72,24 +101,91 @@ export const updateProduct = mutation({
     args: {
         id: v.id("products"),
         name: v.optional(v.string()),
-        price: v.optional(v.string()),
-        image: v.optional(v.string()),
+        basePrice: v.optional(v.string()),
+        discountedPrice: v.optional(v.string()),
+        discountBadge: v.optional(v.string()),
+        baseImage: v.optional(v.string()),
         brand: v.optional(v.string()),
         type: v.optional(v.string()),
-        color: v.optional(v.string()),
-        size: v.optional(v.string()),
         subCategory: v.optional(v.string()),
-        outOfStock: v.optional(v.boolean()),
+        brandLine: v.optional(v.string()),
+        shape: v.optional(v.string()),
+        motor: v.optional(v.string()),
+        energy: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
         await checkAdmin(ctx);
         const { id, ...updates } = args;
-        await ctx.db.patch(id, updates);
+        const cleanUpdates: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(updates)) {
+            if (value !== undefined) {
+                cleanUpdates[key] = value;
+            }
+        }
+        await ctx.db.patch(id, cleanUpdates);
     },
 });
 
 export const deleteProduct = mutation({
     args: { id: v.id("products") },
+    handler: async (ctx, args) => {
+        await checkAdmin(ctx);
+        // Cascade-delete all variants first
+        const variants = await ctx.db
+            .query("productVariants")
+            .withIndex("by_product", (q) => q.eq("productId", args.id))
+            .collect();
+        for (const variant of variants) {
+            await ctx.db.delete(variant._id);
+        }
+        await ctx.db.delete(args.id);
+    },
+});
+
+// ─── Variant Mutations ─────────────────────────────────────────────
+export const addVariant = mutation({
+    args: {
+        productId: v.id("products"),
+        color: v.optional(v.string()),
+        size: v.optional(v.string()),
+        image: v.string(),
+        price: v.optional(v.string()),
+        discountedPrice: v.optional(v.string()),
+        discountBadge: v.optional(v.string()),
+        outOfStock: v.optional(v.boolean()),
+    },
+    handler: async (ctx, args) => {
+        await checkAdmin(ctx);
+        return await ctx.db.insert("productVariants", args);
+    },
+});
+
+export const updateVariant = mutation({
+    args: {
+        id: v.id("productVariants"),
+        color: v.optional(v.string()),
+        size: v.optional(v.string()),
+        image: v.optional(v.string()),
+        price: v.optional(v.string()),
+        discountedPrice: v.optional(v.string()),
+        discountBadge: v.optional(v.string()),
+        outOfStock: v.optional(v.boolean()),
+    },
+    handler: async (ctx, args) => {
+        await checkAdmin(ctx);
+        const { id, ...updates } = args;
+        const cleanUpdates: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(updates)) {
+            if (value !== undefined) {
+                cleanUpdates[key] = value;
+            }
+        }
+        await ctx.db.patch(id, cleanUpdates);
+    },
+});
+
+export const deleteVariant = mutation({
+    args: { id: v.id("productVariants") },
     handler: async (ctx, args) => {
         await checkAdmin(ctx);
         await ctx.db.delete(args.id);
@@ -121,7 +217,13 @@ export const updateCategory = mutation({
     handler: async (ctx, args) => {
         await checkAdmin(ctx);
         const { id, ...updates } = args;
-        await ctx.db.patch(id, updates);
+        const cleanUpdates: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(updates)) {
+            if (value !== undefined) {
+                cleanUpdates[key] = value;
+            }
+        }
+        await ctx.db.patch(id, cleanUpdates);
     },
 });
 
@@ -129,12 +231,19 @@ export const deleteCategory = mutation({
     args: { id: v.id("categories") },
     handler: async (ctx, args) => {
         await checkAdmin(ctx);
-        // Also delete all products in this category
+        // Delete all products and their variants in this category
         const products = await ctx.db
             .query("products")
             .withIndex("by_category", (q) => q.eq("categoryId", args.id))
             .collect();
         for (const product of products) {
+            const variants = await ctx.db
+                .query("productVariants")
+                .withIndex("by_product", (q) => q.eq("productId", product._id))
+                .collect();
+            for (const variant of variants) {
+                await ctx.db.delete(variant._id);
+            }
             await ctx.db.delete(product._id);
         }
         await ctx.db.delete(args.id);

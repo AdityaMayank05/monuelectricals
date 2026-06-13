@@ -5,6 +5,19 @@ import { api } from "@/convex/_generated/api";
 import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Id } from "@/convex/_generated/dataModel";
+
+type VariantData = {
+    id: string; // temp id for UI
+    color: string;
+    size: string;
+    imageFile: File | null;
+    imagePreview: string;
+    price: string;
+    discountedPrice: string;
+    discountBadge: string;
+    outOfStock: boolean;
+};
 
 export default function NewProductPage() {
     const router = useRouter();
@@ -14,27 +27,32 @@ export default function NewProductPage() {
     const [formData, setFormData] = useState({
         name: "",
         categoryId: "",
-        price: "",
+        basePrice: "",
+        discountedPrice: "",
+        discountBadge: "",
         brand: "",
         type: "",
-        color: "",
-        size: "",
-        outOfStock: false,
+        motor: "",
+        energy: "",
     });
 
-    const [imageFile, setImageFile] = useState<File | null>(null);
-    const [imagePreview, setImagePreview] = useState<string>("");
+    const [baseImageFile, setBaseImageFile] = useState<File | null>(null);
+    const [baseImagePreview, setBaseImagePreview] = useState<string>("");
     const [uploading, setUploading] = useState(false);
     const [loading, setLoading] = useState(false);
     const [dragOver, setDragOver] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const [variants, setVariants] = useState<VariantData[]>([
+        { id: "1", color: "", size: "", imageFile: null, imagePreview: "", price: "", discountedPrice: "", discountBadge: "", outOfStock: false }
+    ]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleFileSelect = useCallback((file: File) => {
+    const handleBaseFileSelect = useCallback((file: File) => {
         if (!file.type.startsWith("image/")) {
             alert("Please select an image file");
             return;
@@ -43,21 +61,21 @@ export default function NewProductPage() {
             alert("Image must be less than 10MB");
             return;
         }
-        setImageFile(file);
-        setImagePreview(URL.createObjectURL(file));
+        setBaseImageFile(file);
+        setBaseImagePreview(URL.createObjectURL(file));
     }, []);
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleBaseFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) handleFileSelect(file);
+        if (file) handleBaseFileSelect(file);
     };
 
     const handleDrop = useCallback((e: React.DragEvent) => {
         e.preventDefault();
         setDragOver(false);
         const file = e.dataTransfer.files[0];
-        if (file) handleFileSelect(file);
-    }, [handleFileSelect]);
+        if (file) handleBaseFileSelect(file);
+    }, [handleBaseFileSelect]);
 
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
@@ -69,10 +87,49 @@ export default function NewProductPage() {
         setDragOver(false);
     };
 
-    const removeImage = () => {
-        setImageFile(null);
-        setImagePreview("");
+    const removeBaseImage = () => {
+        setBaseImageFile(null);
+        setBaseImagePreview("");
         if (fileInputRef.current) fileInputRef.current.value = "";
+    };
+
+    const handleVariantChange = (index: number, field: keyof VariantData, value: any) => {
+        setVariants(prev => {
+            const newVariants = [...prev];
+            newVariants[index] = { ...newVariants[index], [field]: value };
+            return newVariants;
+        });
+    };
+
+    const handleVariantFileChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (!file.type.startsWith("image/")) {
+                alert("Please select an image file");
+                return;
+            }
+            if (file.size > 10 * 1024 * 1024) {
+                alert("Image must be less than 10MB");
+                return;
+            }
+            handleVariantChange(index, "imageFile", file);
+            handleVariantChange(index, "imagePreview", URL.createObjectURL(file));
+        }
+    };
+
+    const addVariant = () => {
+        setVariants(prev => [
+            ...prev,
+            { id: Math.random().toString(), color: "", size: "", imageFile: null, imagePreview: "", price: "", discountedPrice: "", discountBadge: "", outOfStock: false }
+        ]);
+    };
+
+    const removeVariant = (index: number) => {
+        if (variants.length <= 1) {
+            alert("At least one variant is required");
+            return;
+        }
+        setVariants(prev => prev.filter((_, i) => i !== index));
     };
 
     const uploadImage = async (file: File): Promise<string> => {
@@ -99,29 +156,47 @@ export default function NewProductPage() {
             alert("Please select a category");
             return;
         }
-        if (!imageFile) {
-            alert("Please upload a product image");
+        if (!baseImageFile) {
+            alert("Please upload a base product image");
             return;
         }
 
         setLoading(true);
         try {
-            // Upload image to Cloudinary
             setUploading(true);
-            const imageUrl = await uploadImage(imageFile);
+            const baseImageUrl = await uploadImage(baseImageFile);
+            
+            const uploadedVariants = [];
+            for (const v of variants) {
+                let variantImgUrl = baseImageUrl;
+                if (v.imageFile) {
+                    variantImgUrl = await uploadImage(v.imageFile);
+                }
+                uploadedVariants.push({
+                    color: v.color || undefined,
+                    size: v.size || undefined,
+                    image: variantImgUrl,
+                    price: v.price || undefined,
+                    discountedPrice: v.discountedPrice || undefined,
+                    discountBadge: v.discountBadge || undefined,
+                    outOfStock: v.outOfStock,
+                });
+            }
+
             setUploading(false);
 
-            // Create product with Cloudinary URL
             await createProduct({
                 name: formData.name,
-                categoryId: formData.categoryId as any,
-                image: imageUrl,
+                categoryId: formData.categoryId as Id<"categories">,
+                baseImage: baseImageUrl,
                 brand: formData.brand,
-                price: formData.price,
-                type: formData.type,
-                color: formData.color,
-                size: formData.size,
-                outOfStock: formData.outOfStock,
+                basePrice: formData.basePrice || undefined,
+                discountedPrice: formData.discountedPrice || undefined,
+                discountBadge: formData.discountBadge || undefined,
+                type: formData.type || undefined,
+                motor: formData.motor || undefined,
+                energy: formData.energy || undefined,
+                variants: uploadedVariants,
             });
 
             router.push("/admin/products");
@@ -136,7 +211,7 @@ export default function NewProductPage() {
 
     if (!categories) {
         return (
-            <div className="max-w-2xl mx-auto space-y-6 animate-pulse">
+            <div className="max-w-3xl mx-auto space-y-6 animate-pulse">
                 <div className="h-8 bg-zinc-800 rounded w-48" />
                 <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl space-y-4">
                     {[1, 2, 3, 4].map((i) => (
@@ -148,7 +223,7 @@ export default function NewProductPage() {
     }
 
     return (
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-3xl mx-auto">
             {/* Header */}
             <div className="flex items-center gap-4 mb-8">
                 <Link href="/admin/products" className="text-zinc-500 hover:text-zinc-300 transition-colors">
@@ -158,14 +233,14 @@ export default function NewProductPage() {
                 </Link>
                 <div>
                     <h1 className="text-2xl font-bold text-zinc-100">Add New Product</h1>
-                    <p className="text-xs text-zinc-600 mt-0.5">Fill in the details below</p>
+                    <p className="text-xs text-zinc-600 mt-0.5">Fill in the parent details and its variants below</p>
                 </div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Main Form Fields */}
+                {/* Parent Product Details */}
                 <div className="bg-zinc-900/60 border border-zinc-800/60 p-6 rounded-2xl space-y-5">
-                    <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Product Details</h3>
+                    <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">1. Parent Details</h3>
 
                     <div>
                         <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Product Name *</label>
@@ -208,11 +283,80 @@ export default function NewProductPage() {
                         </div>
                     </div>
 
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Base Price (MRP)</label>
+                            <input
+                                name="basePrice"
+                                placeholder="₹..."
+                                value={formData.basePrice}
+                                onChange={handleChange}
+                                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-zinc-100 text-sm focus:outline-none focus:border-amber-500/50 transition-colors"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Discounted Price</label>
+                            <input
+                                name="discountedPrice"
+                                placeholder="₹..."
+                                value={formData.discountedPrice}
+                                onChange={handleChange}
+                                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-zinc-100 text-sm focus:outline-none focus:border-amber-500/50 transition-colors"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Discount Badge</label>
+                            <input
+                                name="discountBadge"
+                                placeholder="e.g. 33% + 20% EXTRA"
+                                value={formData.discountBadge}
+                                onChange={handleChange}
+                                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-zinc-100 text-sm focus:outline-none focus:border-amber-500/50 transition-colors"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Type</label>
+                            <input
+                                name="type"
+                                placeholder="e.g. Ceiling Fan"
+                                value={formData.type}
+                                onChange={handleChange}
+                                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-zinc-100 text-sm focus:outline-none focus:border-amber-500/50 transition-colors"
+                            />
+                        </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Motor (Optional)</label>
+                            <input
+                                name="motor"
+                                placeholder="e.g. BLDC"
+                                value={formData.motor}
+                                onChange={handleChange}
+                                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-zinc-100 text-sm focus:outline-none focus:border-amber-500/50 transition-colors"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Energy (Optional)</label>
+                            <input
+                                name="energy"
+                                placeholder="e.g. 23W"
+                                value={formData.energy}
+                                onChange={handleChange}
+                                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-zinc-100 text-sm focus:outline-none focus:border-amber-500/50 transition-colors"
+                            />
+                        </div>
+                    </div>
+
                     {/* Image Upload Zone */}
                     <div>
-                        <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Product Image *</label>
+                        <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Base Product Image *</label>
 
-                        {!imagePreview ? (
+                        {!baseImagePreview ? (
                             <div
                                 onDrop={handleDrop}
                                 onDragOver={handleDragOver}
@@ -227,7 +371,7 @@ export default function NewProductPage() {
                                     ref={fileInputRef}
                                     type="file"
                                     accept="image/*"
-                                    onChange={handleFileChange}
+                                    onChange={handleBaseFileChange}
                                     className="hidden"
                                 />
                                 <div className="flex flex-col items-center gap-3">
@@ -250,24 +394,18 @@ export default function NewProductPage() {
                                 <div className="flex items-center gap-4 p-4">
                                     <div className="w-20 h-20 rounded-xl border border-zinc-700/50 overflow-hidden bg-zinc-800 flex-shrink-0">
                                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                                        <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                                        <img src={baseImagePreview} alt="Preview" className="w-full h-full object-cover" />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm text-zinc-200 font-medium truncate">{imageFile?.name}</p>
+                                        <p className="text-sm text-zinc-200 font-medium truncate">{baseImageFile?.name}</p>
                                         <p className="text-xs text-zinc-600 mt-0.5">
-                                            {imageFile && (imageFile.size / 1024 / 1024).toFixed(2)} MB
+                                            {baseImageFile && (baseImageFile.size / 1024 / 1024).toFixed(2)} MB
                                         </p>
-                                        {uploading && (
-                                            <div className="flex items-center gap-2 mt-2">
-                                                <span className="w-3 h-3 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
-                                                <span className="text-xs text-amber-400 font-medium">Uploading to Cloudinary...</span>
-                                            </div>
-                                        )}
                                     </div>
                                     {!uploading && !loading && (
                                         <button
                                             type="button"
-                                            onClick={removeImage}
+                                            onClick={removeBaseImage}
                                             className="p-2 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all cursor-pointer"
                                         >
                                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -279,103 +417,122 @@ export default function NewProductPage() {
                             </div>
                         )}
                     </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Price</label>
-                            <input
-                                name="price"
-                                placeholder="₹..."
-                                value={formData.price}
-                                onChange={handleChange}
-                                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-zinc-100 text-sm focus:outline-none focus:border-amber-500/50 transition-colors"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Type</label>
-                            <input
-                                name="type"
-                                placeholder="e.g. Ceiling Fan"
-                                value={formData.type}
-                                onChange={handleChange}
-                                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-zinc-100 text-sm focus:outline-none focus:border-amber-500/50 transition-colors"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Color</label>
-                            <input
-                                name="color"
-                                value={formData.color}
-                                onChange={handleChange}
-                                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-zinc-100 text-sm focus:outline-none focus:border-amber-500/50 transition-colors"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Size</label>
-                            <input
-                                name="size"
-                                value={formData.size}
-                                onChange={handleChange}
-                                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-zinc-100 text-sm focus:outline-none focus:border-amber-500/50 transition-colors"
-                            />
-                        </div>
-                    </div>
                 </div>
 
-                {/* Stock Status Toggle */}
-                <div className="bg-zinc-900/60 border border-zinc-800/60 p-6 rounded-2xl">
-                    <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-4">Stock Status</h3>
-
+                {/* Variants Section */}
+                <div className="bg-zinc-900/60 border border-zinc-800/60 p-6 rounded-2xl space-y-5">
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors duration-300 ${formData.outOfStock
-                                ? "bg-red-500/10 border border-red-500/20"
-                                : "bg-emerald-500/10 border border-emerald-500/20"
-                                }`}>
-                                {formData.outOfStock ? (
-                                    <svg className="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" />
-                                    </svg>
-                                ) : (
-                                    <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                                    </svg>
-                                )}
-                            </div>
-                            <div>
-                                <p className={`text-sm font-bold transition-colors duration-300 ${formData.outOfStock ? "text-red-400" : "text-emerald-400"
-                                    }`}>
-                                    {formData.outOfStock ? "Out of Stock" : "In Stock"}
-                                </p>
-                                <p className="text-xs text-zinc-600">
-                                    {formData.outOfStock
-                                        ? "This product will be marked as unavailable"
-                                        : "This product will be available for customers"
-                                    }
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Toggle Switch */}
-                        <button
-                            type="button"
-                            onClick={() => setFormData((prev) => ({ ...prev, outOfStock: !prev.outOfStock }))}
-                            className={`relative w-14 h-7 rounded-full transition-all duration-300 focus:outline-none cursor-pointer ${formData.outOfStock
-                                ? "bg-red-500/30 border border-red-500/40"
-                                : "bg-emerald-500/30 border border-emerald-500/40"
-                                }`}
-                        >
-                            <span
-                                className={`absolute top-0.5 w-6 h-6 rounded-full shadow-lg transition-all duration-300 ${formData.outOfStock
-                                    ? "left-[calc(100%-1.625rem)] bg-red-400"
-                                    : "left-0.5 bg-emerald-400"
-                                    }`}
-                            />
-                        </button>
+                        <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">2. Variants (At least 1 required)</h3>
                     </div>
+
+                    <div className="space-y-4">
+                        {variants.map((variant, index) => (
+                            <div key={variant.id} className="bg-zinc-950 border border-zinc-800/80 p-4 rounded-xl relative group">
+                                <div className="absolute right-4 top-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button
+                                        type="button"
+                                        onClick={() => removeVariant(index)}
+                                        className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <label className="block text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-1">Color</label>
+                                        <input
+                                            value={variant.color}
+                                            onChange={(e) => handleVariantChange(index, "color", e.target.value)}
+                                            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-zinc-100 text-sm focus:outline-none focus:border-amber-500/50"
+                                            placeholder="e.g. White"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-1">Size</label>
+                                        <input
+                                            value={variant.size}
+                                            onChange={(e) => handleVariantChange(index, "size", e.target.value)}
+                                            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-zinc-100 text-sm focus:outline-none focus:border-amber-500/50"
+                                            placeholder="e.g. 1200mm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-1">Price Override (MRP)</label>
+                                        <input
+                                            value={variant.price}
+                                            onChange={(e) => handleVariantChange(index, "price", e.target.value)}
+                                            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-zinc-100 text-sm focus:outline-none focus:border-amber-500/50"
+                                            placeholder="Uses base price if empty"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-1">Discounted Price Override</label>
+                                        <input
+                                            value={variant.discountedPrice}
+                                            onChange={(e) => handleVariantChange(index, "discountedPrice", e.target.value)}
+                                            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-zinc-100 text-sm focus:outline-none focus:border-amber-500/50"
+                                            placeholder="Uses base discounted if empty"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-1">Discount Badge Override</label>
+                                        <input
+                                            value={variant.discountBadge}
+                                            onChange={(e) => handleVariantChange(index, "discountBadge", e.target.value)}
+                                            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-zinc-100 text-sm focus:outline-none focus:border-amber-500/50"
+                                            placeholder="Uses base badge if empty"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-1">Image Override</label>
+                                        <div className="flex items-center gap-3">
+                                            {variant.imagePreview && (
+                                                <div className="w-9 h-9 rounded bg-zinc-800 overflow-hidden flex-shrink-0">
+                                                    <img src={variant.imagePreview} alt="variant" className="w-full h-full object-cover" />
+                                                </div>
+                                            )}
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => handleVariantFileChange(index, e)}
+                                                className="text-xs text-zinc-400 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-zinc-800 file:text-zinc-300 hover:file:bg-zinc-700 cursor-pointer"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex items-center justify-between bg-zinc-900/50 p-3 rounded-lg border border-zinc-800/50">
+                                    <div>
+                                        <p className="text-sm font-semibold text-zinc-300">Out of Stock</p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleVariantChange(index, "outOfStock", !variant.outOfStock)}
+                                        className={`relative w-12 h-6 rounded-full transition-all duration-300 focus:outline-none cursor-pointer ${variant.outOfStock
+                                            ? "bg-red-500/30 border border-red-500/40"
+                                            : "bg-emerald-500/30 border border-emerald-500/40"
+                                            }`}
+                                    >
+                                        <span
+                                            className={`absolute top-0.5 w-4 h-4 rounded-full shadow-lg transition-all duration-300 ${variant.outOfStock
+                                                ? "left-[calc(100%-1.25rem)] bg-red-400"
+                                                : "left-1 bg-emerald-400"
+                                                }`}
+                                        />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={addVariant}
+                        className="w-full py-3 border-2 border-dashed border-zinc-800 rounded-xl text-sm font-bold text-zinc-500 hover:text-amber-500 hover:border-amber-500/50 hover:bg-amber-500/5 transition-all cursor-pointer"
+                    >
+                        + Add Another Variant
+                    </button>
                 </div>
 
                 {/* Action Buttons */}
@@ -394,7 +551,7 @@ export default function NewProductPage() {
                         {loading ? (
                             <span className="flex items-center justify-center gap-2">
                                 <span className="w-4 h-4 border-2 border-zinc-950 border-t-transparent rounded-full animate-spin" />
-                                {uploading ? "Uploading Image..." : "Creating..."}
+                                {uploading ? "Uploading Images..." : "Creating..."}
                             </span>
                         ) : (
                             "Create Product"

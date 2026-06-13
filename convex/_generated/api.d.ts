@@ -11,6 +11,8 @@
 import type * as admin from "../admin.js";
 import type * as categories from "../categories.js";
 import type * as migrate from "../migrate.js";
+import type * as migrateToVariants from "../migrateToVariants.js";
+import type * as productVariants from "../productVariants.js";
 import type * as products from "../products.js";
 import type * as seed from "../seed.js";
 
@@ -24,6 +26,8 @@ declare const fullApi: ApiFromModules<{
   admin: typeof admin;
   categories: typeof categories;
   migrate: typeof migrate;
+  migrateToVariants: typeof migrateToVariants;
+  productVariants: typeof productVariants;
   products: typeof products;
   seed: typeof seed;
 }>;

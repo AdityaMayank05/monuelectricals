@@ -1,15 +1,18 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 export default function ProductDetailPage() {
     const params = useParams();
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    
     const slug = params.category as string;
     const productId = params.productId as string;
 
@@ -23,48 +26,71 @@ export default function ProductDetailPage() {
     );
 
     const [imageZoomed, setImageZoomed] = useState(false);
+    const [activeVariantId, setActiveVariantId] = useState<string | null>(null);
 
-    // Get related products (same brand or same type, excluding current product)
+    // Initialize active variant from URL or default to first
+    useEffect(() => {
+        if (product && (product.variants || []).length > 0) {
+            const variantParam = searchParams.get('variant');
+            if (variantParam && (product.variants || []).some((v: any) => v._id === variantParam)) {
+                setActiveVariantId(variantParam);
+            } else if (!activeVariantId) {
+                setActiveVariantId((product.variants || [])[0]?._id);
+            }
+        }
+    }, [product, searchParams, activeVariantId]);
+
+    const activeVariant = useMemo(() => {
+        if (!product || !activeVariantId) return null;
+        return (product.variants || []).find((v: any) => v._id === activeVariantId) || (product.variants || [])[0];
+    }, [product, activeVariantId]);
+
+    const handleVariantChange = (variantId: string) => {
+        setActiveVariantId(variantId);
+        // Optional: Update URL without navigation
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.set('variant', variantId);
+        window.history.replaceState({}, '', newUrl.toString());
+    };
+
     const relatedProducts = useMemo(() => {
         if (!allProducts || !product) return [];
-        return allProducts
-            .filter(
-                (p) =>
-                    p._id !== product._id &&
-                    (p.brand === product.brand || p.type === product.type)
-            )
-            .slice(0, 4);
-    }, [allProducts, product]);
-
-    // Get color variants of the same product name
-    const colorVariants = useMemo(() => {
-        if (!allProducts || !product) return [];
-        return allProducts.filter(
+        const filtered = allProducts.filter(
             (p) =>
-                p.name === product.name &&
-                p.size === product.size &&
-                p._id !== product._id
+                p._id !== product._id &&
+                (p.brand === product.brand || p.type === product.type)
         );
+
+        return filtered.sort((a, b) => {
+            const aOutOfStockCount = (a.variants || []).filter((v: any) => v.outOfStock).length;
+            const aAllOutOfStock = (a.variants || []).length > 0 && aOutOfStockCount === a.variants!.length;
+
+            const bOutOfStockCount = (b.variants || []).filter((v: any) => v.outOfStock).length;
+            const bAllOutOfStock = (b.variants || []).length > 0 && bOutOfStockCount === b.variants!.length;
+
+            if (aAllOutOfStock && !bAllOutOfStock) return 1;
+            if (!aAllOutOfStock && bAllOutOfStock) return -1;
+            return 0;
+        }).slice(0, 4);
     }, [allProducts, product]);
 
-    // Get size variants
-    const sizeVariants = useMemo(() => {
-        if (!allProducts || !product) return [];
-        const seen = new Set<string>();
-        return allProducts.filter((p) => {
-            if (
-                p.name === product.name &&
-                p.color === product.color &&
-                p.size &&
-                p.size !== product.size &&
-                !seen.has(p.size)
-            ) {
-                seen.add(p.size);
-                return true;
+    // Group variants by color to show unique colors
+    const uniqueColors = useMemo(() => {
+        if (!product) return [];
+        const colors = new Map<string, any>();
+        (product.variants || []).forEach((v: any) => {
+            if (v.color && !colors.has(v.color)) {
+                colors.set(v.color, v);
             }
-            return false;
         });
-    }, [allProducts, product]);
+        return Array.from(colors.values());
+    }, [product]);
+
+    // Get available sizes for the active color
+    const availableSizes = useMemo(() => {
+        if (!product || !activeVariant) return [];
+        return (product.variants || []).filter((v: any) => v.color === activeVariant.color && v.size);
+    }, [product, activeVariant]);
 
     // Loading
     if (product === undefined) {
@@ -90,7 +116,7 @@ export default function ProductDetailPage() {
         );
     }
 
-    if (!product) {
+    if (!product || !activeVariant) {
         return (
             <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center">
                 <div className="text-center">
@@ -111,8 +137,8 @@ export default function ProductDetailPage() {
         product.brand && { label: "Brand", value: product.brand },
         product.type && { label: "Type", value: product.type },
         product.subCategory && { label: "Category", value: product.subCategory },
-        product.color && { label: "Color", value: product.color },
-        product.size && { label: "Size", value: product.size },
+        activeVariant.color && { label: "Color", value: activeVariant.color },
+        activeVariant.size && { label: "Size", value: activeVariant.size },
         product.shape && { label: "Shape", value: product.shape },
         product.motor && { label: "Motor", value: product.motor },
         product.energy && { label: "Power", value: product.energy },
@@ -134,6 +160,11 @@ export default function ProductDetailPage() {
         "Warm White": "bg-yellow-200",
         "Cool White": "bg-blue-100",
     };
+
+    const displayImage = activeVariant.image || product.baseImage;
+    const displayPrice = activeVariant.price || product.basePrice;
+    const displayDiscountedPrice = activeVariant.discountedPrice || product.discountedPrice;
+    const displayDiscountBadge = activeVariant.discountBadge || product.discountBadge;
 
     return (
         <div className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -195,14 +226,21 @@ export default function ProductDetailPage() {
                                     className={`relative w-full h-full transition-transform duration-500 ${imageZoomed ? "scale-125" : "hover:scale-105"
                                         }`}
                                 >
-                                    <Image
-                                        src={product.image}
-                                        alt={`${product.brand} ${product.name}`}
-                                        fill
-                                        className="object-contain drop-shadow-2xl"
-                                        sizes="(max-width: 1024px) 100vw, 50vw"
-                                        priority
-                                    />
+                                    {displayImage ? (
+                                        <Image
+                                            src={displayImage}
+                                            alt={`${product.brand} ${product.name}`}
+                                            fill
+                                            className="object-contain drop-shadow-2xl"
+                                            sizes="(max-width: 1024px) 100vw, 50vw"
+                                            priority
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex flex-col items-center justify-center text-zinc-700 opacity-50 absolute inset-0">
+                                            <svg className="w-24 h-24 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                            <span className="text-sm font-bold uppercase tracking-wider">No Image Provided</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -220,7 +258,7 @@ export default function ProductDetailPage() {
                         {/* Title */}
                         <div>
                             <div className="flex items-center gap-3 mb-3 flex-wrap">
-                                {product.outOfStock && (
+                                {activeVariant.outOfStock && (
                                     <span className="bg-red-500/15 border border-red-500/30 text-red-400 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full flex items-center gap-1.5">
                                         <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
                                         Out of Stock
@@ -244,22 +282,36 @@ export default function ProductDetailPage() {
                         </div>
 
                         {/* Price */}
-                        {product.price && (
+                        {displayPrice && (
                             <div className="mt-6">
                                 <div className="flex items-center gap-3 flex-wrap">
-                                    <span className="text-3xl md:text-4xl font-black text-zinc-500 line-through decoration-2">
-                                        ₹{product.price.toString().replace(/[^0-9.]/g, '')}
+                                    {displayDiscountedPrice && (
+                                        <span className="text-4xl md:text-5xl font-black text-zinc-100">
+                                            ₹ {displayDiscountedPrice.toString().replace(/[^0-9.]/g, '')}
+                                        </span>
+                                    )}
+                                    <span className={`${displayDiscountedPrice ? 'text-2xl md:text-3xl font-bold line-through decoration-2 text-zinc-500' : 'text-3xl md:text-4xl font-black text-zinc-500 line-through decoration-2'}`}>
+                                        ₹{displayPrice.toString().replace(/[^0-9.]/g, '')}
                                     </span>
-                                    <span className="text-zinc-500 font-semibold self-end pb-1">MRP</span>
-                                    <div className="bg-red-500 text-white px-3 py-1 bg-gradient-to-r from-red-500 to-red-600 rounded-full font-bold text-sm tracking-wide shadow-sm ml-2">
-                                        FOR BEST PRICE CONTACT STORE
-                                    </div>
+                                    {!displayDiscountedPrice && <span className="text-zinc-500 font-semibold self-end pb-1">MRP</span>}
+
+                                    {displayDiscountBadge ? (
+                                        <div className="bg-red-500 text-white px-3 py-1 bg-gradient-to-r from-red-500 to-red-600 rounded-full font-bold text-sm tracking-wide shadow-sm ml-2">
+                                            {displayDiscountBadge}
+                                        </div>
+                                    ) : (
+                                        !displayDiscountedPrice && (
+                                            <div className="bg-red-500 text-white px-3 py-1 bg-gradient-to-r from-red-500 to-red-600 rounded-full font-bold text-sm tracking-wide shadow-sm ml-2">
+                                                FOR BEST PRICE CONTACT STORE
+                                            </div>
+                                        )
+                                    )}
                                 </div>
                                 <p className="text-zinc-600 text-sm mt-2">MRP incl. of all taxes</p>
                             </div>
                         )}
 
-                        {!product.price && (
+                        {!displayPrice && (
                             <div className="mt-6 flex items-center gap-3">
                                 <span className="text-lg font-bold text-zinc-400">Contact for Price</span>
                                 <div className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></div>
@@ -270,51 +322,56 @@ export default function ProductDetailPage() {
                         <div className="border-t border-zinc-800 my-8"></div>
 
                         {/* Color Variants */}
-                        {colorVariants.length > 0 && (
+                        {uniqueColors.length > 1 && (
                             <div className="mb-8">
                                 <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-3 block">
-                                    Color — <span className="text-zinc-200">{product.color}</span>
+                                    Color — <span className="text-zinc-200">{activeVariant.color || "Default"}</span>
                                 </label>
                                 <div className="flex gap-3 flex-wrap">
-                                    {/* Current color */}
-                                    <div className="relative group">
-                                        <div className={`w-10 h-10 rounded-full ring-2 ring-amber-500 ring-offset-2 ring-offset-zinc-950 ${colorMap[product.color || ""] || "bg-zinc-600"}`}></div>
-                                        <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] text-amber-400 font-bold whitespace-nowrap">{product.color}</span>
-                                    </div>
-                                    {colorVariants.map((variant) => (
-                                        <Link
-                                            key={variant._id}
-                                            href={`/products/${slug}/${variant._id}`}
-                                            className="relative group"
-                                        >
-                                            <div className={`w-10 h-10 rounded-full ring-2 ring-zinc-700 ring-offset-2 ring-offset-zinc-950 hover:ring-amber-500/50 transition-all cursor-pointer ${colorMap[variant.color || ""] || "bg-zinc-600"}`}></div>
-                                            <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] text-zinc-500 font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">{variant.color}</span>
-                                        </Link>
-                                    ))}
+                                    {uniqueColors.map((variant) => {
+                                        const isActiveColor = variant.color === activeVariant.color;
+                                        return (
+                                            <button
+                                                key={variant._id}
+                                                onClick={() => handleVariantChange(variant._id)}
+                                                className="relative group cursor-pointer"
+                                            >
+                                                <div className={`w-10 h-10 rounded-full ring-2 ring-offset-2 ring-offset-zinc-950 transition-all ${isActiveColor ? 'ring-amber-500' : 'ring-zinc-700 hover:ring-amber-500/50'} ${colorMap[variant.color || ""] || "bg-zinc-600"}`}></div>
+                                                {!isActiveColor && (
+                                                    <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] text-zinc-500 font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">{variant.color}</span>
+                                                )}
+                                                {isActiveColor && (
+                                                    <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] text-amber-400 font-bold whitespace-nowrap">{variant.color}</span>
+                                                )}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
 
                         {/* Size Variants */}
-                        {sizeVariants.length > 0 && (
+                        {availableSizes.length > 1 && (
                             <div className="mb-8 mt-2">
                                 <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-3 block">
-                                    Size — <span className="text-zinc-200">{product.size}</span>
+                                    Size — <span className="text-zinc-200">{activeVariant.size || "Default"}</span>
                                 </label>
                                 <div className="flex gap-2 flex-wrap">
-                                    {/* Current size */}
-                                    <div className="px-4 py-2.5 bg-amber-500/15 border-2 border-amber-500 text-amber-400 text-sm font-bold rounded-lg">
-                                        {product.size}
-                                    </div>
-                                    {sizeVariants.map((variant) => (
-                                        <Link
-                                            key={variant._id}
-                                            href={`/products/${slug}/${variant._id}`}
-                                            className="px-4 py-2.5 bg-zinc-900 border-2 border-zinc-700 text-zinc-300 text-sm font-bold rounded-lg hover:border-amber-500/50 hover:text-amber-400 transition-all cursor-pointer"
-                                        >
-                                            {variant.size}
-                                        </Link>
-                                    ))}
+                                    {availableSizes.map((variant: any) => {
+                                        const isActiveSize = variant._id === activeVariant._id;
+                                        return (
+                                            <button
+                                                key={variant._id}
+                                                onClick={() => handleVariantChange(variant._id)}
+                                                className={`px-4 py-2.5 text-sm font-bold rounded-lg transition-all cursor-pointer ${isActiveSize
+                                                    ? 'bg-amber-500/15 border-2 border-amber-500 text-amber-400'
+                                                    : 'bg-zinc-900 border-2 border-zinc-700 text-zinc-300 hover:border-amber-500/50 hover:text-amber-400'
+                                                }`}
+                                            >
+                                                {variant.size}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
@@ -341,7 +398,7 @@ export default function ProductDetailPage() {
                         {/* CTA - WhatsApp */}
                         <div className="mt-10 flex flex-col sm:flex-row gap-3">
                             <a
-                                href={`https://wa.me/919213684115?text=Hi! I'm interested in the ${product.brand} ${product.name}${product.size ? ` (${product.size})` : ""}${product.color ? ` in ${product.color}` : ""}`}
+                                href={`https://wa.me/919213684115?text=Hi! I'm interested in the ${product.brand} ${product.name}${activeVariant.size ? ` (${activeVariant.size})` : ""}${activeVariant.color ? ` in ${activeVariant.color}` : ""}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex-1 flex items-center justify-center gap-3 bg-green-600 hover:bg-green-500 text-white font-bold py-4 px-6 text-sm transition-all duration-200 rounded-xl cursor-pointer shadow-lg shadow-green-600/20 hover:shadow-green-500/30"
@@ -363,7 +420,7 @@ export default function ProductDetailPage() {
                             {[
                                 { icon: "✓", label: "100% Genuine" },
                                 { icon: "◈", label: "Best Price" },
-                                product.outOfStock
+                                activeVariant.outOfStock
                                     ? { icon: "✕", label: "Out of Stock", isRed: true }
                                     : { icon: "⚡", label: "In Stock" },
                             ].map((badge) => (
@@ -408,13 +465,19 @@ export default function ProductDetailPage() {
                                     className="group bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:border-amber-500/30 hover:shadow-[0_8px_30px_rgba(245,158,11,0.08)] cursor-pointer block"
                                 >
                                     <div className="relative aspect-square bg-zinc-900 flex items-center justify-center p-6">
-                                        <Image
-                                            src={rp.image}
-                                            alt={rp.name}
-                                            width={160}
-                                            height={160}
-                                            className="object-contain w-full h-full transition-transform duration-300 group-hover:scale-110"
-                                        />
+                                        {rp.baseImage ? (
+                                            <Image
+                                                src={rp.baseImage}
+                                                alt={rp.name}
+                                                width={160}
+                                                height={160}
+                                                className="object-contain w-full h-full transition-transform duration-300 group-hover:scale-110"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex flex-col items-center justify-center text-zinc-700 opacity-50">
+                                                <svg className="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                            </div>
+                                        )}
                                         <span className="absolute top-3 left-3 bg-zinc-800/80 text-zinc-400 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded">
                                             {rp.brand}
                                         </span>
@@ -424,8 +487,7 @@ export default function ProductDetailPage() {
                                             {rp.name}
                                         </h3>
                                         <div className="flex items-center gap-2 mt-1">
-                                            {rp.color && <span className="text-[11px] text-zinc-500">{rp.color}</span>}
-                                            {rp.price && <span className="text-amber-400 font-bold text-xs ml-auto">{rp.price}</span>}
+                                            {rp.basePrice && <span className="text-amber-400 font-bold text-xs ml-auto">{rp.basePrice}</span>}
                                         </div>
                                     </div>
                                 </Link>

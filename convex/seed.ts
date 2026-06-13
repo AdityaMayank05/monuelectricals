@@ -1,8 +1,7 @@
 import { internalMutation } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 
-// Image map: excelId+color+size -> image path (from existing lib/products.ts assets)
-// We map at the product model level since Excel doesn't have images
+// Image map: product name + color -> image URL
 const FAN_IMAGES: Record<string, string> = {
     "Atomberg Renessa_White": "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930937/monuelectricals/fans/atomberg-renesa-white.png",
     "Atomberg Renessa_Black": "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930935/monuelectricals/fans/atomberg-renesa-black.png",
@@ -62,7 +61,6 @@ const WIRE_IMAGES: Record<string, string> = {
     "Chiwas ZHFR": "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931261/monuelectricals/wires/chiwas-wire.png",
 };
 
-// Light images mapped by product name
 const LIGHT_IMAGES: Record<string, string> = {
     "Surya Shine NXT_Round": "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931009/monuelectricals/lights/down-lights/surya-shine-nxt-round.png",
     "Surya Shine NXT Square_Square": "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931011/monuelectricals/lights/down-lights/surya-shine-nxt-square.png",
@@ -96,9 +94,7 @@ const LIGHT_IMAGES: Record<string, string> = {
     "Surya Prime Spot": "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930988/monuelectricals/lights/assessory/surya-prime-spot.png",
 };
 
-// Switchgear images - map by brand line + type + color
 const SWITCH_IMAGES: Record<string, string> = {
-    // Anchor
     "Anchor_Switch_White": "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931087/monuelectricals/switchgear/anchor-6a-switch-white.png",
     "Anchor_Switch_Black": "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931085/monuelectricals/switchgear/anchor-6a-switch-black.png",
     "Anchor_Socket_White": "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931084/monuelectricals/switchgear/anchor-6a-socket-white.png",
@@ -107,7 +103,6 @@ const SWITCH_IMAGES: Record<string, string> = {
     "Anchor_Bell Push_Black": "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931088/monuelectricals/switchgear/anchor-bellpush-1m-black.png",
     "Anchor_Fan Indicator_White": "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931098/monuelectricals/switchgear/anchor-fanindicator-1m-white.png",
     "Anchor_Fan Indicator_Black": "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931096/monuelectricals/switchgear/anchor-fanindicator-1m-black.png",
-    // Havells
     "Havells_Switch_White": "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931117/monuelectricals/switchgear/havells-2wayswitch-white.png",
     "Havells_Switch_Black": "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931114/monuelectricals/switchgear/havells-2wayswitch-black.png",
     "Havells_Socket_White": "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931108/monuelectricals/switchgear/havells-16a-socket-black.png",
@@ -120,7 +115,6 @@ const SWITCH_IMAGES: Record<string, string> = {
     "Havells_Blank_Black": "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931078/monuelectricals/switchgear/anchor-6a-blank-black.png",
     "Havells_Plate_White": "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931121/monuelectricals/switchgear/havells-3m-plate-white.png",
     "Havells_Plate_Black": "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931146/monuelectricals/switchgear/havells-adiva-4m-plate-black.png",
-    // Reo
     "Reo_Switch_White": "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931087/monuelectricals/switchgear/anchor-6a-switch-white.png",
     "Reo_Switch_Black": "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931085/monuelectricals/switchgear/anchor-6a-switch-black.png",
     "Reo_Socket_White": "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931084/monuelectricals/switchgear/anchor-6a-socket-white.png",
@@ -135,10 +129,40 @@ const SWITCH_IMAGES: Record<string, string> = {
     "Reo_Plate_Black": "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931146/monuelectricals/switchgear/havells-adiva-4m-plate-black.png",
 };
 
+// Helper: creates a parent product + its variants
+async function createParentWithVariants(
+    ctx: any,
+    parent: {
+        categoryId: Id<"categories">;
+        name: string;
+        brand: string;
+        baseImage: string;
+        basePrice?: string;
+        type?: string;
+        subCategory?: string;
+        brandLine?: string;
+        shape?: string;
+        motor?: string;
+        energy?: string;
+    },
+    variants: Array<{
+        color?: string;
+        size?: string;
+        image: string;
+        price?: string;
+        outOfStock?: boolean;
+    }>
+) {
+    const productId = await ctx.db.insert("products", parent);
+    for (const variant of variants) {
+        await ctx.db.insert("productVariants", { productId, ...variant });
+    }
+    return productId;
+}
+
 export const seedAll = internalMutation({
     args: {},
     handler: async (ctx) => {
-        // Check if already seeded
         const existing = await ctx.db.query("categories").first();
         if (existing) {
             throw new Error("Database already seeded! Clear the tables first if you want to re-seed.");
@@ -146,168 +170,209 @@ export const seedAll = internalMutation({
 
         // === CATEGORIES ===
         const ceilingFansId = await ctx.db.insert("categories", {
-            name: "Ceiling Fans",
-            slug: "ceiling-fans",
+            name: "Ceiling Fans", slug: "ceiling-fans",
             coverImage: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930915/monuelectricals/category-cover/fan-cover.png",
             displayOrder: 0,
         });
         const ventilationId = await ctx.db.insert("categories", {
-            name: "Ventilation",
-            slug: "ventilation",
+            name: "Ventilation", slug: "ventilation",
             coverImage: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930919/monuelectricals/category-cover/haveels-venti.png",
             displayOrder: 1,
         });
         const switchgearId = await ctx.db.insert("categories", {
-            name: "Switchgear",
-            slug: "switchgear",
+            name: "Switchgear", slug: "switchgear",
             coverImage: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930923/monuelectricals/category-cover/switch-cover.png",
             displayOrder: 2,
         });
         const chimneysId = await ctx.db.insert("categories", {
-            name: "Chimneys",
-            slug: "chimneys",
+            name: "Chimneys", slug: "chimneys",
             coverImage: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930922/monuelectricals/category-cover/sakash-automatic-chimney.png",
             displayOrder: 3,
         });
         const wiresId = await ctx.db.insert("categories", {
-            name: "Wires",
-            slug: "wires",
+            name: "Wires", slug: "wires",
             coverImage: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930920/monuelectricals/category-cover/havells-wire.png",
             displayOrder: 4,
         });
         const lightingId = await ctx.db.insert("categories", {
-            name: "Lighting",
-            slug: "lighting",
+            name: "Lighting", slug: "lighting",
             coverImage: "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930914/monuelectricals/category-cover/celing-light.png",
             displayOrder: 5,
         });
 
-        // === FANS ===
-        const fans = [
-            { excelId: "f1", name: "Atomberg Renessa", brand: "Atomberg", type: "Decorative", motor: "BLDC", energy: "23W", color: "White", size: "1200mm", price: "₹5,000" },
-            { excelId: "f1", name: "Atomberg Renessa", brand: "Atomberg", type: "Decorative", motor: "BLDC", energy: "23W", color: "Black", size: "1200mm", price: "₹5,000" },
-            { excelId: "f2", name: "Atomberg Ikona", brand: "Atomberg", type: "Decorative", motor: "BLDC", energy: "23W", color: "White", size: "1200mm", price: "₹5,000" },
-            { excelId: "f2", name: "Atomberg Ikona", brand: "Atomberg", type: "Decorative", motor: "BLDC", energy: "23W", color: "Black", size: "1200mm", price: "₹5,000" },
-            { excelId: "f3", name: "Bajaj Artisan", brand: "Bajaj", type: "Decorative", motor: "Normal", energy: "23W", color: "Grey", size: "1200mm", price: "₹5,000" },
-            { excelId: "f3", name: "Bajaj Artisan", brand: "Bajaj", type: "Decorative", motor: "Normal", energy: "23W", color: "Dark Brown", size: "1200mm", price: "₹5,000" },
-            { excelId: "f4", name: "Bajaj Style Pro", brand: "Bajaj", type: "Decorative", motor: "Normal", energy: "23W", color: "White", size: "1200mm", price: "₹5,000" },
-            { excelId: "f4", name: "Bajaj Style Pro", brand: "Bajaj", type: "Decorative", motor: "Normal", energy: "23W", color: "Brown", size: "1200mm", price: "₹5,000" },
-            { excelId: "f4", name: "Bajaj Style Pro", brand: "Bajaj", type: "Decorative", motor: "Normal", energy: "23W", color: "Beige", size: "1200mm", price: "₹5,000" },
-            { excelId: "f5", name: "Crompton Superbreeze", brand: "Crompton", type: "Plain", motor: "Normal", energy: "23W", color: "White", size: "1200mm", price: "₹5,000" },
-            { excelId: "f5", name: "Crompton Superbreeze", brand: "Crompton", type: "Plain", motor: "Normal", energy: "23W", color: "Brown", size: "1200mm", price: "₹5,000" },
-            { excelId: "f6", name: "Havells Enticer", brand: "Havells", type: "Decorative", motor: "Normal", energy: "23W", color: "White", size: "1200mm", price: "₹5,000" },
-            { excelId: "f6", name: "Havells Enticer", brand: "Havells", type: "Decorative", motor: "Normal", energy: "23W", color: "Brown", size: "1200mm", price: "₹5,000" },
-            { excelId: "f6", name: "Havells Enticer", brand: "Havells", type: "Decorative", motor: "Normal", energy: "23W", color: "Gold", size: "1200mm", price: "₹5,000" },
-            { excelId: "f7", name: "Havells Exter", brand: "Havells", type: "Decorative", motor: "Normal", energy: "23W", color: "White", size: "1200mm", price: "₹5,000" },
-            { excelId: "f7", name: "Havells Exter", brand: "Havells", type: "Decorative", motor: "Normal", energy: "23W", color: "Brown", size: "1200mm", price: "₹5,000" },
-            { excelId: "f7", name: "Havells Exter", brand: "Havells", type: "Decorative", motor: "Normal", energy: "23W", color: "Beige", size: "1200mm", price: "₹5,000" },
-            { excelId: "f8", name: "Havells Quickair", brand: "Havells", type: "Decorative", motor: "Normal", energy: "23W", color: "White", size: "1200mm", price: "₹5,000" },
-            { excelId: "f8", name: "Havells Quickair", brand: "Havells", type: "Decorative", motor: "Normal", energy: "23W", color: "Blue", size: "1200mm", price: "₹5,000" },
-            { excelId: "f9", name: "Havells Crist BLDC", brand: "Havells", type: "Decorative", motor: "BLDC", energy: "23W", color: "Brown", size: "1200mm", price: "₹5,000" },
-            { excelId: "f10", name: "Havells Epic BLDC", brand: "Havells", type: "Decorative", motor: "BLDC", energy: "23W", color: "White", size: "1200mm", price: "₹5,000" },
-            { excelId: "f11", name: "Orient Blanco", brand: "Orient", type: "Decorative", motor: "Normal", energy: "23W", color: "White", size: "1200mm", price: "₹5,000" },
-            { excelId: "f11", name: "Orient Blanco", brand: "Orient", type: "Decorative", motor: "Normal", energy: "23W", color: "Beige", size: "1200mm", price: "₹5,000" },
-            { excelId: "f12", name: "Reo Utsav", brand: "Havells", type: "Plain", motor: "Normal", energy: "23W", color: "White", size: "1200mm", price: "₹5,000" },
-            { excelId: "f12", name: "Reo Utsav", brand: "Havells", type: "Plain", motor: "Normal", energy: "23W", color: "White", size: "600mm", price: "₹2,500" },
-            { excelId: "f12", name: "Reo Utsav", brand: "Havells", type: "Plain", motor: "Normal", energy: "23W", color: "Brown", size: "1200mm", price: "₹5,000" },
-            { excelId: "f12", name: "Reo Utsav", brand: "Havells", type: "Plain", motor: "Normal", energy: "23W", color: "Brown", size: "600mm", price: "₹2,500" },
-            { excelId: "f13", name: "Surya Astra", brand: "Surya", type: "Decorative", motor: "Normal", energy: "23W", color: "Brown", size: "1200mm", price: "₹5,000" },
-            { excelId: "f14", name: "Bajaj Eldico", brand: "Bajaj", type: "Decorative", motor: "Normal", energy: "23W", color: "White", size: "1200mm", price: "₹5,000" },
+        // === CEILING FANS ===
+        // Each fan definition is now { parent fields, variants[] }
+        const fanDefs = [
+            { name: "Atomberg Renessa", brand: "Atomberg", type: "Decorative", motor: "BLDC", energy: "23W",
+              variants: [
+                { color: "White", size: "1200mm", price: "₹5,000" },
+                { color: "Black", size: "1200mm", price: "₹5,000" },
+              ]},
+            { name: "Atomberg Ikona", brand: "Atomberg", type: "Decorative", motor: "BLDC", energy: "23W",
+              variants: [
+                { color: "White", size: "1200mm", price: "₹5,000" },
+                { color: "Black", size: "1200mm", price: "₹5,000" },
+              ]},
+            { name: "Bajaj Artisan", brand: "Bajaj", type: "Decorative", motor: "Normal", energy: "23W",
+              variants: [
+                { color: "Grey", size: "1200mm", price: "₹5,000" },
+                { color: "Dark Brown", size: "1200mm", price: "₹5,000" },
+              ]},
+            { name: "Bajaj Style Pro", brand: "Bajaj", type: "Decorative", motor: "Normal", energy: "23W",
+              variants: [
+                { color: "White", size: "1200mm", price: "₹5,000" },
+                { color: "Brown", size: "1200mm", price: "₹5,000" },
+                { color: "Beige", size: "1200mm", price: "₹5,000" },
+              ]},
+            { name: "Crompton Superbreeze", brand: "Crompton", type: "Plain", motor: "Normal", energy: "23W",
+              variants: [
+                { color: "White", size: "1200mm", price: "₹5,000" },
+                { color: "Brown", size: "1200mm", price: "₹5,000" },
+              ]},
+            { name: "Havells Enticer", brand: "Havells", type: "Decorative", motor: "Normal", energy: "23W",
+              variants: [
+                { color: "White", size: "1200mm", price: "₹5,000" },
+                { color: "Brown", size: "1200mm", price: "₹5,000" },
+                { color: "Gold", size: "1200mm", price: "₹5,000" },
+              ]},
+            { name: "Havells Exter", brand: "Havells", type: "Decorative", motor: "Normal", energy: "23W",
+              variants: [
+                { color: "White", size: "1200mm", price: "₹5,000" },
+                { color: "Brown", size: "1200mm", price: "₹5,000" },
+                { color: "Beige", size: "1200mm", price: "₹5,000" },
+              ]},
+            { name: "Havells Quickair", brand: "Havells", type: "Decorative", motor: "Normal", energy: "23W",
+              variants: [
+                { color: "White", size: "1200mm", price: "₹5,000" },
+                { color: "Blue", size: "1200mm", price: "₹5,000" },
+              ]},
+            { name: "Havells Crist BLDC", brand: "Havells", type: "Decorative", motor: "BLDC", energy: "23W",
+              variants: [
+                { color: "Brown", size: "1200mm", price: "₹5,000" },
+              ]},
+            { name: "Havells Epic BLDC", brand: "Havells", type: "Decorative", motor: "BLDC", energy: "23W",
+              variants: [
+                { color: "White", size: "1200mm", price: "₹5,000" },
+              ]},
+            { name: "Orient Blanco", brand: "Orient", type: "Decorative", motor: "Normal", energy: "23W",
+              variants: [
+                { color: "White", size: "1200mm", price: "₹5,000" },
+                { color: "Beige", size: "1200mm", price: "₹5,000" },
+              ]},
+            { name: "Reo Utsav", brand: "Havells", type: "Plain", motor: "Normal", energy: "23W",
+              variants: [
+                { color: "White", size: "1200mm", price: "₹5,000" },
+                { color: "White", size: "600mm", price: "₹2,500" },
+                { color: "Brown", size: "1200mm", price: "₹5,000" },
+                { color: "Brown", size: "600mm", price: "₹2,500" },
+              ]},
+            { name: "Surya Astra", brand: "Surya", type: "Decorative", motor: "Normal", energy: "23W",
+              variants: [
+                { color: "Brown", size: "1200mm", price: "₹5,000" },
+              ]},
+            { name: "Bajaj Eldico", brand: "Bajaj", type: "Decorative", motor: "Normal", energy: "23W",
+              variants: [
+                { color: "White", size: "1200mm", price: "₹5,000" },
+              ]},
         ];
 
-        for (const fan of fans) {
-            const imageKey = `${fan.name}_${fan.color}`;
-            await ctx.db.insert("products", {
-                categoryId: ceilingFansId,
-                excelId: fan.excelId,
-                name: fan.name,
-                brand: fan.brand,
-                image: FAN_IMAGES[imageKey] || "/assets/fans/havells-enticer-brown.png",
-                color: fan.color,
-                type: fan.type,
-                motor: fan.motor,
-                energy: fan.energy,
-                size: fan.size,
-                price: fan.price,
-            });
+        for (const fan of fanDefs) {
+            const { variants, ...parentFields } = fan;
+            const firstVariant = variants[0];
+            const baseImage = FAN_IMAGES[`${fan.name}_${firstVariant.color}`] || "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930951/monuelectricals/fans/havells-enticer-brown.png";
+            await createParentWithVariants(ctx,
+                { categoryId: ceilingFansId, ...parentFields, baseImage, basePrice: firstVariant.price },
+                variants.map(v => ({
+                    ...v,
+                    image: FAN_IMAGES[`${fan.name}_${v.color}`] || baseImage,
+                }))
+            );
         }
 
-        // === EXHAUST FANS ===
-        const exhaustFans = [
-            { excelId: "vf1", name: "Surya Beach Air", brand: "Surya", color: "White", size: "200mm" },
-            { excelId: "vf2", name: "Crompton Ventilus", brand: "Crompton", color: "White", size: "150mm", price: "₹500" },
-            { excelId: "vf3", name: "Crompton Axial Air", brand: "Crompton", color: "White", size: "200mm", price: "₹100" },
-            { excelId: "vf4", name: "Anchor Smart Air", brand: "Anchor", color: "White", size: "250mm", price: "₹100" },
-            { excelId: "vf5", name: "Anchor Smart Air High Speed", brand: "Anchor", color: "White", size: "200mm", price: "₹100" },
-            { excelId: "vf6", name: "Havells Air Thrill DX", brand: "Havells", color: "White", size: "200mm", price: "₹100" },
-            { excelId: "vf6", name: "Havells Air Thrill DX", brand: "Havells", color: "White", size: "250mm", price: "₹200" },
-            { excelId: "vf7", name: "Sakash Ventilation Fan", brand: "Sakash", color: "White", size: "150mm", price: "₹100" },
-            { excelId: "vf7", name: "Sakash Ventilation Fan", brand: "Sakash", color: "White", size: "200mm", price: "₹100" },
-            { excelId: "vf7", name: "Sakash Ventilation Fan", brand: "Sakash", color: "White", size: "250mm", price: "₹200" },
-            { excelId: "vf8", name: "RR Signature Ventilation Fan", brand: "RR", color: "White", size: "150mm", price: "₹100" },
+        // === EXHAUST/VENTILATION FANS ===
+        const exhaustDefs = [
+            { name: "Surya Beach Air", brand: "Surya",
+              variants: [{ color: "White", size: "200mm" }]},
+            { name: "Crompton Ventilus", brand: "Crompton",
+              variants: [{ color: "White", size: "150mm", price: "₹500" }]},
+            { name: "Crompton Axial Air", brand: "Crompton",
+              variants: [{ color: "White", size: "200mm", price: "₹100" }]},
+            { name: "Anchor Smart Air", brand: "Anchor",
+              variants: [{ color: "White", size: "250mm", price: "₹100" }]},
+            { name: "Anchor Smart Air High Speed", brand: "Anchor",
+              variants: [{ color: "White", size: "200mm", price: "₹100" }]},
+            { name: "Havells Air Thrill DX", brand: "Havells",
+              variants: [
+                { color: "White", size: "200mm", price: "₹100" },
+                { color: "White", size: "250mm", price: "₹200" },
+              ]},
+            { name: "Sakash Ventilation Fan", brand: "Sakash",
+              variants: [
+                { color: "White", size: "150mm", price: "₹100" },
+                { color: "White", size: "200mm", price: "₹100" },
+                { color: "White", size: "250mm", price: "₹200" },
+              ]},
+            { name: "RR Signature Ventilation Fan", brand: "RR",
+              variants: [{ color: "White", size: "150mm", price: "₹100" }]},
         ];
 
-        for (const ef of exhaustFans) {
-            const imageKey = ef.size === "250mm" ? `${ef.name}_250mm` : ef.name;
-            await ctx.db.insert("products", {
-                categoryId: ventilationId,
-                excelId: ef.excelId,
-                name: ef.name,
-                brand: ef.brand,
-                image: EXHAUST_IMAGES[imageKey] || EXHAUST_IMAGES[ef.name] || "/assets/ventilation-fans/crompton-venti.png",
-                color: ef.color,
-                type: "Exhaust Fan",
-                size: ef.size,
-                price: ef.price,
-            });
+        for (const ef of exhaustDefs) {
+            const { variants, ...parentFields } = ef;
+            const baseImage = EXHAUST_IMAGES[ef.name] || "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931249/monuelectricals/ventilation-fans/crompton-ventlius-150mm.png";
+            await createParentWithVariants(ctx,
+                { categoryId: ventilationId, ...parentFields, baseImage, basePrice: (variants[0] as any).price || "₹100", type: "Exhaust Fan" },
+                variants.map(v => ({
+                    ...v,
+                    image: (v.size === "250mm" ? EXHAUST_IMAGES[`${ef.name}_250mm`] : null) || EXHAUST_IMAGES[ef.name] || baseImage,
+                }))
+            );
         }
 
         // === CHIMNEYS ===
-        const chimneys = [
-            { excelId: "c1", name: "Glen Auto Clean Chimney", brand: "Glen", type: "Auto Clean", color: "Black" },
-            { excelId: "c2", name: "Glen Chimney", brand: "Glen", type: "Manual", color: "Black" },
-            { excelId: "c3", name: "Inalsa Chimney", brand: "Inalsa", type: "Manual", color: "Black" },
-            { excelId: "c4", name: "Sakash Auto Clean Chimney", brand: "Sakash", type: "Auto Clean", color: "Black" },
+        const chimneyDefs = [
+            { name: "Glen Auto Clean Chimney", brand: "Glen", type: "Auto Clean" },
+            { name: "Glen Chimney", brand: "Glen", type: "Manual" },
+            { name: "Inalsa Chimney", brand: "Inalsa", type: "Manual" },
+            { name: "Sakash Auto Clean Chimney", brand: "Sakash", type: "Auto Clean" },
         ];
 
-        for (const ch of chimneys) {
-            await ctx.db.insert("products", {
-                categoryId: chimneysId,
-                excelId: ch.excelId,
-                name: ch.name,
-                brand: ch.brand,
-                image: CHIMNEY_IMAGES[ch.name] || "/assets/chimneys/Sakashchimney.png",
-                color: ch.color,
-                type: ch.type,
-            });
+        for (const ch of chimneyDefs) {
+            const baseImage = CHIMNEY_IMAGES[ch.name] || "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930930/monuelectricals/chimneys/sakash-automatic-chimney.png";
+            await createParentWithVariants(ctx,
+                { categoryId: chimneysId, name: ch.name, brand: ch.brand, type: ch.type, baseImage },
+                [{ color: "Black", image: baseImage }]
+            );
         }
 
         // === WIRES ===
-        const wireColors = ["Red", "Blue", "Black", "Green", "Yellow"];
         const wireBrands = [
-            { brand: "Havells", name: "Havells Life Line", sizes: [".75mm", "1mm", "1.5mm", "2.5mm", "4mm", "6mm"], basePrices: ["₹100", "—", "₹100", "₹100", "₹200", "₹200"] },
+            { brand: "Havells", name: "Havells Life Line", sizes: [".75mm", "1mm", "1.5mm", "2.5mm", "4mm", "6mm"], basePrices: ["₹100", undefined, "₹100", "₹100", "₹200", "₹200"] },
             { brand: "Polycab", name: "Polycab Etira Wires", sizes: [".75mm", "1mm", "1.5mm", "2.5mm", "4mm", "6mm"], basePrices: ["₹100", "₹852", "₹800", "₹741", "₹123", "₹456"] },
             { brand: "Chiwas", name: "Chiwas ZHFR", sizes: [".75mm", "1mm", "1.5mm", "2.5mm", "4mm", "6mm"], basePrices: ["₹100", "₹100", "₹753", "₹789", "₹4,523", "₹423"] },
         ];
+        const wireColors = ["Red", "Blue", "Black", "Green", "Yellow"];
 
-        let wireExcelId = 1;
         for (const wb of wireBrands) {
+            // One parent per brand+name, variants for each color+size combo
+            const firstColorImage = WIRE_IMAGES[`${wb.name}_Red`] || WIRE_IMAGES[wb.name] || "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931269/monuelectricals/wires/havells-wire.png";
+            const variants: Array<{ color: string; size: string; image: string; price?: string }> = [];
+
             for (let si = 0; si < wb.sizes.length; si++) {
                 for (const color of wireColors) {
                     const imageKey = `${wb.name}_${color}`;
-                    await ctx.db.insert("products", {
-                        categoryId: wiresId,
-                        excelId: `w${wireExcelId}`,
-                        name: wb.name,
-                        brand: wb.brand,
-                        image: WIRE_IMAGES[imageKey] || WIRE_IMAGES[wb.name] || "/assets/wires/havells-wire.png",
-                        color: color,
+                    variants.push({
+                        color,
                         size: wb.sizes[si],
-                        price: wb.basePrices[si] !== "—" ? wb.basePrices[si] : undefined,
+                        image: WIRE_IMAGES[imageKey] || WIRE_IMAGES[wb.name] || firstColorImage,
+                        price: wb.basePrices[si],
                     });
                 }
-                wireExcelId++;
             }
+
+            await createParentWithVariants(ctx,
+                { categoryId: wiresId, name: wb.name, brand: wb.brand, baseImage: firstColorImage, basePrice: wb.basePrices[0] },
+                variants
+            );
         }
 
         // === SWITCHES ===
@@ -316,295 +381,250 @@ export const seedAll = internalMutation({
         // === LIGHTING ===
         await seedLighting(ctx, lightingId);
 
-        return { success: true, message: "All data seeded successfully!" };
+        return { success: true, message: "All data seeded with parent-child structure!" };
     },
 });
 
 async function seedSwitches(ctx: any, categoryId: Id<"categories">) {
-    // Reo by Havells
-    const reoItems = [
-        { excelId: "s1", name: "Reo 6A Switch", type: "Switch" },
-        { excelId: "s2", name: "Reo 16A Switch", type: "Switch" },
-        { excelId: "s3", name: "Reo 6A Socket", type: "Socket" },
-        { excelId: "s4", name: "Reo 16A Socket", type: "Socket" },
-        { excelId: "s5", name: "Reo Bell Push 1M", type: "Bell Push" },
-        { excelId: "s6", name: "Reo Bell Push 2M", type: "Bell Push" },
-        { excelId: "s7", name: "Reo Fan Indicator 1M", type: "Fan Indicator" },
-        { excelId: "s8", name: "Reo Fan Indicator 2M", type: "Fan Indicator" },
-        { excelId: "s9", name: "Reo 6A 2-Way Switch", type: "Switch" },
-        { excelId: "s10", name: "Reo Blank", type: "Blank" },
-        { excelId: "s11", name: "Reo 2M Plate", type: "Plate" },
-        { excelId: "s12", name: "Reo 1M Plate", type: "Plate" },
-        { excelId: "s13", name: "Reo 3M Plate", type: "Plate" },
-        { excelId: "s14", name: "Reo 4M Plate", type: "Plate" },
-        { excelId: "s15", name: "Reo 6M Plate", type: "Plate" },
-        { excelId: "s16", name: "Reo 8M(V) Plate", type: "Plate" },
-        { excelId: "s17", name: "Reo 8M(H) Plate", type: "Plate" },
-        { excelId: "s18", name: "Reo 12M Plate", type: "Plate" },
-        { excelId: "s19", name: "Reo 16M Plate", type: "Plate" },
-        { excelId: "s20", name: "Reo 18M Plate", type: "Plate" },
-    ];
-    for (const item of reoItems) {
-        for (const color of ["White", "Black"]) {
-            await ctx.db.insert("products", {
-                categoryId,
-                excelId: item.excelId,
-                name: item.name,
-                brand: "Reo",
-                brandLine: "REO BY HAVELLS",
-                image: SWITCH_IMAGES[`Reo_${item.type}_${color}`] || "/assets/switchgear/anchor-6a-switch-white.png",
-                color,
-                type: item.type,
-            });
+    // Helper for switch brands
+    async function seedSwitchBrand(
+        items: Array<{ name: string; type: string }>,
+        brand: string,
+        brandLine: string,
+        colors: string[],
+        brandKey: string
+    ) {
+        for (const item of items) {
+            const firstColor = colors[0];
+            const baseImage = SWITCH_IMAGES[`${brandKey}_${item.type}_${firstColor}`] || "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931087/monuelectricals/switchgear/anchor-6a-switch-white.png";
+
+            await createParentWithVariants(ctx,
+                { categoryId, name: item.name, brand, brandLine, type: item.type, baseImage },
+                colors.map(color => ({
+                    color,
+                    image: SWITCH_IMAGES[`${brandKey}_${item.type}_${color}`] || baseImage,
+                }))
+            );
         }
     }
+
+    // Reo by Havells
+    const reoItems = [
+        { name: "Reo 6A Switch", type: "Switch" },
+        { name: "Reo 16A Switch", type: "Switch" },
+        { name: "Reo 6A Socket", type: "Socket" },
+        { name: "Reo 16A Socket", type: "Socket" },
+        { name: "Reo Bell Push 1M", type: "Bell Push" },
+        { name: "Reo Bell Push 2M", type: "Bell Push" },
+        { name: "Reo Fan Indicator 1M", type: "Fan Indicator" },
+        { name: "Reo Fan Indicator 2M", type: "Fan Indicator" },
+        { name: "Reo 6A 2-Way Switch", type: "Switch" },
+        { name: "Reo Blank", type: "Blank" },
+        { name: "Reo 2M Plate", type: "Plate" },
+        { name: "Reo 1M Plate", type: "Plate" },
+        { name: "Reo 3M Plate", type: "Plate" },
+        { name: "Reo 4M Plate", type: "Plate" },
+        { name: "Reo 6M Plate", type: "Plate" },
+        { name: "Reo 8M(V) Plate", type: "Plate" },
+        { name: "Reo 8M(H) Plate", type: "Plate" },
+        { name: "Reo 12M Plate", type: "Plate" },
+        { name: "Reo 16M Plate", type: "Plate" },
+        { name: "Reo 18M Plate", type: "Plate" },
+    ];
+    await seedSwitchBrand(reoItems, "Reo", "REO BY HAVELLS", ["White", "Black"], "Reo");
 
     // Anchor Penta
     const anchorItems = [
-        { excelId: "s21", name: "Anchor Penta 6A Switch", type: "Switch" },
-        { excelId: "s22", name: "Anchor Penta 16A Switch", type: "Switch" },
-        { excelId: "s23", name: "Anchor Penta 6A Socket", type: "Socket" },
-        { excelId: "s24", name: "Anchor Penta 16A Socket", type: "Socket" },
-        { excelId: "s25", name: "Anchor Bell Push 1M", type: "Bell Push" },
-        { excelId: "s26", name: "Anchor Bell Push 2M", type: "Bell Push" },
-        { excelId: "s27", name: "Anchor Fan Indicator 1M", type: "Fan Indicator" },
-        { excelId: "s27", name: "Anchor Fan Indicator 2M", type: "Fan Indicator" },
+        { name: "Anchor Penta 6A Switch", type: "Switch" },
+        { name: "Anchor Penta 16A Switch", type: "Switch" },
+        { name: "Anchor Penta 6A Socket", type: "Socket" },
+        { name: "Anchor Penta 16A Socket", type: "Socket" },
+        { name: "Anchor Bell Push 1M", type: "Bell Push" },
+        { name: "Anchor Bell Push 2M", type: "Bell Push" },
+        { name: "Anchor Fan Indicator 1M", type: "Fan Indicator" },
+        { name: "Anchor Fan Indicator 2M", type: "Fan Indicator" },
     ];
-    for (const item of anchorItems) {
-        for (const color of ["White", "Black"]) {
-            await ctx.db.insert("products", {
-                categoryId,
-                excelId: item.excelId,
-                name: item.name,
-                brand: "Anchor",
-                brandLine: "ANCHOR PENTA",
-                image: SWITCH_IMAGES[`Anchor_${item.type}_${color}`] || "/assets/switchgear/anchor-6a-switch-white.png",
-                color,
-                type: item.type,
-            });
-        }
-    }
+    await seedSwitchBrand(anchorItems, "Anchor", "ANCHOR PENTA", ["White", "Black"], "Anchor");
 
     // Havells Adiva
     const havellsItems = [
-        { excelId: "s28", name: "Havells Adiva 6A Switch", type: "Switch" },
-        { excelId: "s29", name: "Havells Adiva 16A Switch", type: "Switch" },
-        { excelId: "s30", name: "Havells Adiva 6A Socket", type: "Socket" },
-        { excelId: "s31", name: "Havells Adiva 16A Socket", type: "Socket" },
-        { excelId: "s32", name: "Havells Adiva Bell Push 1M", type: "Bell Push" },
-        { excelId: "s33", name: "Havells Adiva Bell Push 2M", type: "Bell Push" },
-        { excelId: "s34", name: "Havells Adiva Fan Indicator 1M", type: "Fan Indicator" },
-        { excelId: "s35", name: "Havells Adiva Fan Indicator 2M", type: "Fan Indicator" },
-        { excelId: "s36", name: "Havells Adiva 6A 2-Way Switch", type: "Switch" },
-        { excelId: "s37", name: "Havells Adiva Blank", type: "Blank" },
-        { excelId: "s38", name: "Havells Adiva 2M Plate", type: "Plate" },
-        { excelId: "s39", name: "Havells Adiva 1M Plate", type: "Plate" },
-        { excelId: "s40", name: "Havells Adiva 3M Plate", type: "Plate" },
-        { excelId: "s41", name: "Havells Adiva 4M Plate", type: "Plate" },
-        { excelId: "s42", name: "Havells Adiva 6M Plate", type: "Plate" },
-        { excelId: "s43", name: "Havells Adiva 8M(V) Plate", type: "Plate" },
-        { excelId: "s44", name: "Havells Adiva 8M(H) Plate", type: "Plate" },
-        { excelId: "s45", name: "Havells Adiva 12M Plate", type: "Plate" },
-        { excelId: "s46", name: "Havells Adiva 16M Plate", type: "Plate" },
-        { excelId: "s47", name: "Havells Adiva 18M Plate", type: "Plate" },
+        { name: "Havells Adiva 6A Switch", type: "Switch" },
+        { name: "Havells Adiva 16A Switch", type: "Switch" },
+        { name: "Havells Adiva 6A Socket", type: "Socket" },
+        { name: "Havells Adiva 16A Socket", type: "Socket" },
+        { name: "Havells Adiva Bell Push 1M", type: "Bell Push" },
+        { name: "Havells Adiva Bell Push 2M", type: "Bell Push" },
+        { name: "Havells Adiva Fan Indicator 1M", type: "Fan Indicator" },
+        { name: "Havells Adiva Fan Indicator 2M", type: "Fan Indicator" },
+        { name: "Havells Adiva 6A 2-Way Switch", type: "Switch" },
+        { name: "Havells Adiva Blank", type: "Blank" },
+        { name: "Havells Adiva 2M Plate", type: "Plate" },
+        { name: "Havells Adiva 1M Plate", type: "Plate" },
+        { name: "Havells Adiva 3M Plate", type: "Plate" },
+        { name: "Havells Adiva 4M Plate", type: "Plate" },
+        { name: "Havells Adiva 6M Plate", type: "Plate" },
+        { name: "Havells Adiva 8M(V) Plate", type: "Plate" },
+        { name: "Havells Adiva 8M(H) Plate", type: "Plate" },
+        { name: "Havells Adiva 12M Plate", type: "Plate" },
     ];
-    for (const item of havellsItems) {
-        // s46 only has Black
-        const colors = item.excelId === "s46" ? ["Black"] : ["White", "Black"];
-        for (const color of colors) {
-            await ctx.db.insert("products", {
-                categoryId,
-                excelId: item.excelId,
-                name: item.name,
-                brand: "Havells",
-                brandLine: "HAVELLS ADIVA",
-                image: SWITCH_IMAGES[`Havells_${item.type}_${color}`] || "/assets/switchgear/havells-3m-plate-white.png",
-                color,
-                type: item.type,
-            });
-        }
-    }
+    await seedSwitchBrand(havellsItems, "Havells", "HAVELLS ADIVA", ["White", "Black"], "Havells");
+
+    // Havells Adiva 16M Plate - Black only
+    const baseImg16m = SWITCH_IMAGES["Havells_Plate_Black"] || "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931146/monuelectricals/switchgear/havells-adiva-4m-plate-black.png";
+    await createParentWithVariants(ctx,
+        { categoryId, name: "Havells Adiva 16M Plate", brand: "Havells", brandLine: "HAVELLS ADIVA", type: "Plate", baseImage: baseImg16m },
+        [{ color: "Black", image: baseImg16m }]
+    );
+
+    // Havells Adiva 18M Plate
+    await seedSwitchBrand(
+        [{ name: "Havells Adiva 18M Plate", type: "Plate" }],
+        "Havells", "HAVELLS ADIVA", ["White", "Black"], "Havells"
+    );
 }
 
 async function seedLighting(ctx: any, categoryId: Id<"categories">) {
+    const colors2 = ["Warm White", "Cool White"];
+    const sizes3 = ["6W", "10W", "15W"];
+    const defaultLightImg = "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931003/monuelectricals/lights/down-lights/havells-trim-nxt-round.png";
+
     // LED Panels - Recessed
     const recessedPanels = [
-        { excelId: "l2", name: "Surya Shine NXT", brand: "Surya", shape: "Round" },
-        { excelId: "l3", name: "Surya Shine NXT Square", brand: "Surya", shape: "Square" },
-        { excelId: "l", name: "Havells Trim NXT", brand: "Havells", shape: "Round" },
-        { excelId: "l4", name: "Havells Trim NXT", brand: "Havells", shape: "Square" },
-        { excelId: "l6", name: "Halonix Kornet Max+", brand: "Halonix", shape: "Round" },
-        { excelId: "l7", name: "Halonix Kornet Max+", brand: "Halonix", shape: "Square" },
-        { excelId: "l8", name: "Philips Astra Sleek", brand: "Philips", shape: "Round" },
-        { excelId: "l9", name: "Philips Astra Sleek", brand: "Philips", shape: "Square" },
+        { name: "Surya Shine NXT", brand: "Surya", shape: "Round" },
+        { name: "Surya Shine NXT Square", brand: "Surya", shape: "Square" },
+        { name: "Havells Trim NXT", brand: "Havells", shape: "Round" },
+        { name: "Havells Trim NXT", brand: "Havells", shape: "Square" },
+        { name: "Halonix Kornet Max+", brand: "Halonix", shape: "Round" },
+        { name: "Halonix Kornet Max+", brand: "Halonix", shape: "Square" },
+        { name: "Philips Astra Sleek", brand: "Philips", shape: "Round" },
+        { name: "Philips Astra Sleek", brand: "Philips", shape: "Square" },
     ];
 
-    const sizes3 = ["6W", "10W", "15W"];
-    const colors2 = ["Warm White", "Cool White"];
-
     for (const panel of recessedPanels) {
+        const imageKey = `${panel.name}_${panel.shape}`;
+        const baseImage = LIGHT_IMAGES[imageKey] || defaultLightImg;
+        const variants: Array<{ color: string; size: string; image: string; price: string }> = [];
         for (const color of colors2) {
             for (const size of sizes3) {
-                const imageKey = `${panel.name}_${panel.shape}`;
-                await ctx.db.insert("products", {
-                    categoryId,
-                    excelId: panel.excelId,
-                    name: panel.name,
-                    brand: panel.brand,
-                    image: LIGHT_IMAGES[imageKey] || "/assets/lights/down-lights/havells-trim-nxt-round.png",
-                    color,
-                    type: "Recessed",
-                    subCategory: "LED Panel",
-                    shape: panel.shape,
-                    size,
+                variants.push({
+                    color, size, image: baseImage,
                     price: size === "6W" ? "₹40" : size === "10W" ? "₹50" : "₹60",
                 });
             }
         }
+        await createParentWithVariants(ctx,
+            { categoryId, name: panel.name, brand: panel.brand, baseImage, type: "Recessed", subCategory: "LED Panel", shape: panel.shape },
+            variants
+        );
     }
 
     // Havells Luna (only 6W)
-    for (const color of colors2) {
-        await ctx.db.insert("products", {
-            categoryId,
-            excelId: "l5",
-            name: "Havells Luna",
-            brand: "Havells",
-            image: LIGHT_IMAGES["Havells Luna_Round"] || "/assets/lights/down-lights/havells-luna-round.png",
-            color,
-            type: "Recessed",
-            subCategory: "LED Panel",
-            shape: "Round",
-            size: "6W",
-            price: "₹40",
-        });
-    }
+    const lunaImg = LIGHT_IMAGES["Havells Luna_Round"] || defaultLightImg;
+    await createParentWithVariants(ctx,
+        { categoryId, name: "Havells Luna", brand: "Havells", baseImage: lunaImg, type: "Recessed", subCategory: "LED Panel", shape: "Round", basePrice: "₹40" },
+        colors2.map(color => ({ color, size: "6W", image: lunaImg, price: "₹40" }))
+    );
 
     // Surface panels
     const surfacePanels = [
-        { excelId: "l10", name: "Havells Trim Cosmo", brand: "Havells", shapes: ["Round", "Square"] },
-        { excelId: "l11", name: "Surya Dazzle Max", brand: "Surya", shapes: ["Round"] },
-        { excelId: "l12", name: "Surya Dazzle Max", brand: "Surya", shapes: ["Square"] },
-        { excelId: "l13", name: "Halonix Orion", brand: "Halonix", shapes: ["Round"] },
-        { excelId: "l14", name: "Halonix Orion", brand: "Halonix", shapes: ["Square"] },
+        { name: "Havells Trim Cosmo", brand: "Havells", shapes: ["Round", "Square"] },
+        { name: "Surya Dazzle Max", brand: "Surya", shapes: ["Round"] },
+        { name: "Surya Dazzle Max", brand: "Surya", shapes: ["Square"] },
+        { name: "Halonix Orion", brand: "Halonix", shapes: ["Round"] },
+        { name: "Halonix Orion", brand: "Halonix", shapes: ["Square"] },
     ];
 
     for (const panel of surfacePanels) {
         for (const shape of panel.shapes) {
+            const imageKey = `${panel.name}_${shape}`;
+            const baseImage = LIGHT_IMAGES[imageKey] || "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931014/monuelectricals/lights/surface-light/havells-trim-cosmo-round.png";
+            const variants: Array<{ color: string; size: string; image: string; price: string }> = [];
             for (const color of colors2) {
                 for (const size of sizes3) {
-                    const imageKey = `${panel.name}_${shape}`;
-                    await ctx.db.insert("products", {
-                        categoryId,
-                        excelId: panel.excelId,
-                        name: panel.name,
-                        brand: panel.brand,
-                        image: LIGHT_IMAGES[imageKey] || "/assets/lights/surface-light/havells-trim-cosmo-round.png",
-                        color,
-                        type: "Surface",
-                        subCategory: "LED Panel",
-                        shape,
-                        size,
+                    variants.push({
+                        color, size, image: baseImage,
                         price: size === "6W" ? "₹40" : size === "10W" ? "₹50" : "₹60",
                     });
                 }
             }
+            await createParentWithVariants(ctx,
+                { categoryId, name: panel.name, brand: panel.brand, baseImage, type: "Surface", subCategory: "LED Panel", shape },
+                variants
+            );
         }
     }
 
     // Concealed panels
     const concealedPanels = [
-        { excelId: "l15", name: "Surya Moon Pro", brand: "Surya" },
-        { excelId: "l16", name: "Halonix Edge Glow", brand: "Halonix" },
+        { name: "Surya Moon Pro", brand: "Surya" },
+        { name: "Halonix Edge Glow", brand: "Halonix" },
     ];
     for (const panel of concealedPanels) {
-        for (const color of colors2) {
-            await ctx.db.insert("products", {
-                categoryId,
-                excelId: panel.excelId,
-                name: panel.name,
-                brand: panel.brand,
-                image: LIGHT_IMAGES[`${panel.name}_Round`] || LIGHT_IMAGES[panel.name] || "/assets/lights/down-lights/havells-trim-nxt-round.png",
-                color,
-                type: "Concealed",
-                subCategory: "LED Panel",
-                shape: "Round",
-                size: "6W",
-                price: "₹40",
-            });
-        }
+        const baseImage = LIGHT_IMAGES[`${panel.name}_Round`] || LIGHT_IMAGES[panel.name] || defaultLightImg;
+        await createParentWithVariants(ctx,
+            { categoryId, name: panel.name, brand: panel.brand, baseImage, type: "Concealed", subCategory: "LED Panel", shape: "Round", basePrice: "₹40" },
+            colors2.map(color => ({ color, size: "6W", image: baseImage, price: "₹40" }))
+        );
     }
 
     // LED Bulbs
     const bulbs = [
-        { excelId: "lb1", name: "Halonix Astron Plus", brand: "Halonix", sizes: ["9W", "12W"], prices: ["₹40", "₹40"] },
-        { excelId: "lb2", name: "Surya Neo Max D", brand: "Surya", sizes: ["9W", "10W", "15W"], prices: ["₹40", "₹50", "₹60"] },
-        { excelId: "lb3", name: "Panasonic Led Bulb", brand: "Panasonic", sizes: ["9W", "15W"], prices: ["₹40", "₹60"] },
-        { excelId: "lb4", name: "Halonix Astron Jumbo", brand: "Halonix", sizes: ["40W", "50W"], prices: ["—", "—"] },
+        { name: "Halonix Astron Plus", brand: "Halonix", sizes: ["9W", "12W"], prices: ["₹40", "₹40"] },
+        { name: "Surya Neo Max D", brand: "Surya", sizes: ["9W", "10W", "15W"], prices: ["₹40", "₹50", "₹60"] },
+        { name: "Panasonic Led Bulb", brand: "Panasonic", sizes: ["9W", "15W"], prices: ["₹40", "₹60"] },
+        { name: "Halonix Astron Jumbo", brand: "Halonix", sizes: ["40W", "50W"], prices: [undefined, undefined] },
     ];
     for (const bulb of bulbs) {
-        for (let i = 0; i < bulb.sizes.length; i++) {
-            await ctx.db.insert("products", {
-                categoryId,
-                excelId: bulb.excelId,
-                name: bulb.name,
-                brand: bulb.brand,
-                image: LIGHT_IMAGES[bulb.name] || "/assets/lights/bulbs/halonix-astron-plus.png",
-                color: "Cool White",
-                type: "Bulb",
-                subCategory: "LED Bulb",
-                size: bulb.sizes[i],
-                price: bulb.prices[i] !== "—" ? bulb.prices[i] : undefined,
-            });
-        }
+        const baseImage = LIGHT_IMAGES[bulb.name] || "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930993/monuelectricals/lights/bulbs/halonix-astron-plus.png";
+        const variants = bulb.sizes.map((size, i) => ({
+            color: "Cool White" as string,
+            size,
+            image: baseImage,
+            price: bulb.prices[i],
+        }));
+        await createParentWithVariants(ctx,
+            { categoryId, name: bulb.name, brand: bulb.brand, baseImage, type: "Bulb", subCategory: "LED Bulb", basePrice: bulb.prices[0] },
+            variants
+        );
     }
 
     // LED Battens
     const battens = [
-        { excelId: "lbatten1", name: "Surya Amaze Metalica", brand: "Surya", sizes: ["36W", "40W"], prices: ["₹500", "₹600"] },
-        { excelId: "lbatten2", name: "Surya GLine", brand: "Surya", sizes: ["20W", "22W"], prices: ["₹100", "₹200"] },
-        { excelId: "lbatten3", name: "Bajaj Beam Max", brand: "Bajaj", sizes: ["40W"], prices: ["₹500"] },
-        { excelId: "lbatten4", name: "Halonix Streak Square", brand: "Halonix", sizes: ["20W"], prices: ["₹100"] },
-        { excelId: "lbatten5", name: "Halonix Lotus", brand: "Halonix", sizes: ["40W"], prices: ["₹500"] },
-        { excelId: "lbatten6", name: "Philips Led Batten", brand: "Philips", sizes: ["20W"], prices: ["₹100"] },
-        { excelId: "lbatten7", name: "Havells Led Batten", brand: "Havells", sizes: ["20W", "25W"], prices: ["₹100", "₹200"] },
+        { name: "Surya Amaze Metalica", brand: "Surya", sizes: ["36W", "40W"], prices: ["₹500", "₹600"] },
+        { name: "Surya GLine", brand: "Surya", sizes: ["20W", "22W"], prices: ["₹100", "₹200"] },
+        { name: "Bajaj Beam Max", brand: "Bajaj", sizes: ["40W"], prices: ["₹500"] },
+        { name: "Halonix Streak Square", brand: "Halonix", sizes: ["20W"], prices: ["₹100"] },
+        { name: "Halonix Lotus", brand: "Halonix", sizes: ["40W"], prices: ["₹500"] },
+        { name: "Philips Led Batten", brand: "Philips", sizes: ["20W"], prices: ["₹100"] },
+        { name: "Havells Led Batten", brand: "Havells", sizes: ["20W", "25W"], prices: ["₹100", "₹200"] },
     ];
     for (const batten of battens) {
-        for (let i = 0; i < batten.sizes.length; i++) {
-            await ctx.db.insert("products", {
-                categoryId,
-                excelId: batten.excelId,
-                name: batten.name,
-                brand: batten.brand,
-                image: LIGHT_IMAGES[batten.name] || "/assets/lights/tubelights/ledbatten.png",
-                color: "Cool White",
-                type: "Batten",
-                subCategory: "LED Batten",
-                size: batten.sizes[i],
-                price: batten.prices[i],
-            });
-        }
+        const baseImage = LIGHT_IMAGES[batten.name] || "https://res.cloudinary.com/dvza6iqax/image/upload/v1771931023/monuelectricals/lights/tubelights/ledbatten.png";
+        const variants = batten.sizes.map((size, i) => ({
+            color: "Cool White" as string,
+            size,
+            image: baseImage,
+            price: batten.prices[i],
+        }));
+        await createParentWithVariants(ctx,
+            { categoryId, name: batten.name, brand: batten.brand, baseImage, type: "Batten", subCategory: "LED Batten", basePrice: batten.prices[0] },
+            variants
+        );
     }
 
     // Spotlights
     const spotlights = [
-        { excelId: "sl1", name: "Reo Flare", brand: "Havells" },
-        { excelId: "sl2", name: "Surya Prime Spot", brand: "Surya" },
+        { name: "Reo Flare", brand: "Havells" },
+        { name: "Surya Prime Spot", brand: "Surya" },
     ];
     for (const spot of spotlights) {
-        for (const color of ["Warm White", "White"]) {
-            await ctx.db.insert("products", {
-                categoryId,
-                excelId: spot.excelId,
-                name: spot.name,
-                brand: spot.brand,
-                image: LIGHT_IMAGES[spot.name] || "/assets/lights/assessory/surya-prime-spot.png",
-                color,
-                type: "Spotlight",
-                subCategory: "Spotlight",
-                size: "2W",
-                price: "₹200",
-            });
-        }
+        const baseImage = LIGHT_IMAGES[spot.name] || "https://res.cloudinary.com/dvza6iqax/image/upload/v1771930988/monuelectricals/lights/assessory/surya-prime-spot.png";
+        await createParentWithVariants(ctx,
+            { categoryId, name: spot.name, brand: spot.brand, baseImage, type: "Spotlight", subCategory: "Spotlight", basePrice: "₹200" },
+            [
+                { color: "Warm White", size: "2W", image: baseImage, price: "₹200" },
+                { color: "White", size: "2W", image: baseImage, price: "₹200" },
+            ]
+        );
     }
 }
